@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A1733">
+<title>Minha conta — NexumCell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
+<script src="nexumcell-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{--ink:#0A1733;--ink2:#13244D;--bg:#F4F4F8;--card:#fff;--line:#E2E1EC;--txt:#1B1A2E;--mut:#696784;--pri:#1A5CFF;--pri-s:#E8F0FF;--gold:#E2B33B;
+  --ok:#0E8A5F;--ok-s:#E3F4EC;--warn:#A86A12;--warn-s:#FBF1DF;--bad:#C23B3B;--bad-s:#FBE7E7;--f:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--f);font-size:15px;line-height:1.5;color:var(--txt);background:var(--bg);-webkit-font-smoothing:antialiased;min-height:100vh}
+.top{background:var(--ink);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px}.brand img{height:22px}.brand i{width:1px;height:20px;background:rgba(255,255,255,.35)}.brand span{font-weight:600;letter-spacing:.12em;color:#9DB7F5}
+.top button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+main{max-width:640px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:22px;margin:4px 0 4px}h2{font-size:17px;margin:0 0 10px}h3{font-size:15px;margin:16px 0 6px}
+.muted{color:var(--mut)}.small{font-size:13px}.mono{font-family:ui-monospace,Consolas,monospace}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:14px;box-shadow:0 1px 2px rgba(10,23,51,.04)}
+label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--mut);margin-top:12px}
+input,select,textarea{font:inherit;font-size:16px;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pri-s);border-color:var(--pri)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;border-radius:10px;padding:12px 16px;border:1px solid var(--line);background:#fff;color:var(--txt);cursor:pointer;text-decoration:none;min-height:46px}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--ink)}.btn.red{background:var(--bad);border-color:var(--bad);color:#fff}.btn.green{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.full{width:100%}.btn:disabled{opacity:.55;cursor:not-allowed}.btn.sm{min-height:36px;padding:7px 12px;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hero{background:linear-gradient(135deg,var(--ink),var(--ink2));color:#fff;border-radius:16px;padding:22px 20px;margin-top:6px}
+.hero small{color:#A9B6D3}.hero b{display:block;font-size:28px;margin:2px 0}
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:20px;padding:3px 10px}
+.b-green{background:var(--ok-s);color:var(--ok)}.b-red{background:var(--bad-s);color:var(--bad)}.b-amber{background:var(--warn-s);color:var(--warn)}.b-blue{background:var(--pri-s);color:var(--pri)}.b-gray{background:#EEEDF4;color:var(--mut)}
+.parc{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.parc:first-child{border-top:0}.parc .v{text-align:right}.parc .v b{display:block}
+.aviso{border-radius:12px;padding:12px 14px;margin-top:12px;font-size:14px}.aviso.bad{background:var(--bad-s);color:#7A1F1F}.aviso.ok{background:var(--ok-s);color:#0B5B3F}.aviso.warn{background:var(--warn-s);color:#6E4508}
+.erro{color:var(--bad);font-size:14px;min-height:20px;margin-top:8px}
+.contrato{border:1px solid var(--line);border-radius:10px;padding:16px;max-height:52vh;overflow-y:auto;font-family:Georgia,serif;font-size:14px;line-height:1.6;background:#FCFCFE}
+.contrato h4{font-family:var(--f);font-size:13.5px;margin:12px 0 4px}
+.check{flex-direction:row;align-items:flex-start;gap:10px;color:var(--txt);font-weight:400;font-size:14px}.check input{width:22px;height:22px;flex:none;margin-top:1px}
+canvas.sig{width:100%;height:180px;border:2px dashed #B9C6E4;border-radius:12px;background:#fff;touch-action:none;display:block}
+.modal{position:fixed;inset:0;background:rgba(10,23,51,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.modal[hidden]{display:none}.mbox{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:20px 18px 28px;position:relative}
+@media(min-width:620px){.modal{align-items:center}.mbox{border-radius:18px}}
+.x{position:absolute;right:12px;top:10px;border:0;background:transparent;font-size:28px;line-height:1;color:var(--mut);cursor:pointer}
+.qr{width:230px;margin:10px auto}.qr svg{width:100%;height:auto}
+.cod{word-break:break-all;font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#F4F4F8;border-radius:8px;padding:10px;color:var(--mut)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:30}
+#toast div{background:var(--ink);color:#fff;border-radius:10px;padding:10px 16px;margin-top:8px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+#toast div.err{background:var(--bad)}#toast div.ok{background:var(--ok)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--pri-s);border-top-color:var(--pri);border-radius:50%;animation:g .8s linear infinite;vertical-align:-3px}
+@keyframes g{to{transform:rotate(360deg)}}
+.center{text-align:center}.ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px}.ic svg{width:32px;height:32px}
+.ic.ok{background:var(--ok-s);color:var(--ok)}.ic.bad{background:var(--bad-s);color:var(--bad)}
+a{color:var(--pri)}
+.nps{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.nps button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer}
+.chat{max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
+.bolha{max-width:85%;padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.45}.bolha.ia{background:#F0F3FA;align-self:flex-start;border-bottom-left-radius:4px}.bolha.eu{background:var(--pri);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-btn{position:fixed;right:16px;bottom:18px;z-index:15;background:var(--ink);color:#fff;border:0;border-radius:24px;padding:12px 18px;font:inherit;font-weight:600;box-shadow:0 8px 24px rgba(10,23,51,.3);cursor:pointer}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand"><img src="data:image/webp;base64,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" alt="NEXUM"><i></i><span>CELL</span></div><div style="display:flex;gap:8px"><button id="lang" aria-label="Idioma">ES</button><button id="sair" hidden>Sair</button></div></header>
+<main id="app"><p class="center muted" style="margin-top:40px"><span class="spin"></span> Carregando…</p></main>
+<div id="modal" class="modal" hidden><div class="mbox"><button class="x" id="mx" aria-label="Fechar">×</button><div id="mbody"></div></div></div>
+<div id="toast"></div>
+<script type="module">
+/* Portal do cliente NexumCell: faturas, PIX, assinatura do contrato e comunicar roubo. */
+const FIREBASE_CONFIG = window.NEXUMCELL_FIREBASE || {apiKey:''};
+const DEMO = /[?&]demo\b/.test(location.search);
+const FB_ON = !!FIREBASE_CONFIG.apiKey && !DEMO;
+const FBV = '10.12.2', DEMO_KEY = 'nexumcell_demo_v1';
+const LINKS = {
+  celularSeguro: 'https://celularseguro.mj.gov.br',
+  boFurto: 'https://www.parana.pr.gov.br/servicos/Servicos/Boletins-de-Ocorrencia/Registrar-Boletim-de-Ocorrencia-de-furto-xv3K1jo1',
+};
+
+/* ---------- utilitários ---------- */
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl = n => (Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const r2 = n => Math.round((Number(n)||0)*100)/100;
+const onlyDig = s => String(s||'').replace(/\D/g,'');
+function isoDate(d){ const z=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()); }
+const hoje = () => isoDate(new Date());
+const fmtD = s => s ? String(s).split('-').reverse().join('/') : '—';
+function fmtDT(ms){ if(!ms) return '—'; const d=new Date(ms); return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function diasEntre(a,b){ const pa=a.split('-').map(Number), pb=b.split('-').map(Number); return Math.round((Date.UTC(pb[0],pb[1]-1,pb[2])-Date.UTC(pa[0],pa[1]-1,pa[2]))/86400000); }
+function cpfOk(c){ c=onlyDig(c); if(c.length!==11||/^(\d)\1+$/.test(c)) return false; for(let t=9;t<11;t++){ let s=0; for(let i=0;i<t;i++) s+=+c[i]*(t+1-i); if(((s*10)%11)%10!==+c[t]) return false; } return true; }
+const svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+function toast(t,k=''){ const d=document.createElement('div'); d.className=k; d.textContent=t; $('#toast').appendChild(d); setTimeout(()=>d.remove(),4200); }
+function openModal(html){ $('#mbody').innerHTML=html; $('#modal').hidden=false; }
+function closeModal(){ $('#modal').hidden=true; }
+$('#mx').onclick=closeModal; $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+async function sha256(txt){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(txt))); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+const chaveAcesso = (cpf,nasc,tel4) => sha256(`nexumcell|${onlyDig(cpf)}|${nasc}|${onlyDig(tel4).slice(-4)}`);
+const primeiroNome = n => String(n||'').trim().split(/\s+/)[0]||'';
+const normNome = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+
+/* ---------- dados (Firebase com login anônimo, ou demonstração) ---------- */
+let fb=null;
+const demoLer = () => { try{ return JSON.parse(localStorage.getItem(DEMO_KEY))||{}; }catch(e){ return {}; } };
+const DB = {
+  async get(c,id){
+    if(!fb){ const d=demoLer(); const v=(d[c]||{})[id]; return v?{id,...v}:null; }
+    const s=await fb.m.getDoc(fb.m.doc(fb.db,c,id)); return s.exists()?{id:s.id,...s.data()}:null;
+  },
+  async add(c,data){
+    if(!fb){ const d=demoLer(); d[c]=d[c]||{}; const id='p'+Date.now().toString(36); d[c][id]=JSON.parse(JSON.stringify(data)); localStorage.setItem(DEMO_KEY,JSON.stringify(d)); return id; }
+    const r=await fb.m.addDoc(fb.m.collection(fb.db,c),data); return r.id;
+  },
+  async set(c,id,data){
+    if(!fb){ const d=demoLer(); d[c]=d[c]||{}; d[c][id]=Object.assign(d[c][id]||{},JSON.parse(JSON.stringify(data))); localStorage.setItem(DEMO_KEY,JSON.stringify(d)); return; }
+    await fb.m.setDoc(fb.m.doc(fb.db,c,id),data,{merge:true});
+  }
+};
+async function iniciarFirebase(){
+  const base=`https://www.gstatic.com/firebasejs/${FBV}/`;
+  const [a,au,m]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+  const app=a.initializeApp(FIREBASE_CONFIG), auth=au.getAuth(app);
+  if(!auth.currentUser) await au.signInAnonymously(auth);
+  fb={m,db:m.getFirestore(app)};
+}
+
+/* ---------- faturas (mesma regra do app e do servidor) ---------- */
+function valorHoje(p,ap){
+  if(p.pago) return {valor:p.valor,dias:0,tipo:'pago'};
+  const d=diasEntre(p.venc,hoje());
+  if(d<0) return {valor:r2(p.valor*(1-(Number(ap.descontoPct)||0)/100)),dias:d,tipo:'antecipado'};
+  if(d===0) return {valor:p.valor,dias:0,tipo:'hoje'};
+  return {valor:r2(p.valor*(1+(Number(ap.multaPct)||0)/100+(Number(ap.moraDiaPct)||0)/100*d)),dias:d,tipo:'atraso'};
+}
+function quitacao(ap){
+  const n=Number(ap.nParcelas)||(ap.parcelas||[]).length, fin=Number(ap.financiado)||0, principal=n?fin/n:0;
+  let total=0, cheio=0;
+  (ap.parcelas||[]).filter(p=>!p.pago).forEach(p=>{ const h=valorHoje(p,ap);
+    const futura=diasEntre(p.venc,hoje())<0;
+    if(futura&&principal>0){ total+=Math.min(principal,p.valor); cheio+=p.valor; }
+    else if(futura){ total+=h.valor; cheio+=p.valor; }
+    else { total+=h.valor; cheio+=h.valor; } });
+  return {total:r2(total),desconto:r2(cheio-total)};
+}
+function etapas(ap){
+  if(ap.etapaTotalDias!=null){ const t=Math.max(1,+ap.etapaTotalDias); return {parcial:Math.min(t,Math.max(1,+ap.etapaParcialDias||t)),total:t}; }
+  const t=(Number(ap.toleranciaDias)||0)+1; return {parcial:t,total:t};
+}
+function situacao(ap){
+  if(ap.roubo&&!ap.roubo.liberadoEm) return ['Roubo/perda comunicado — aparelho travado','red'];
+  if(ap.quitado||ap.status==='QUITADO') return ['Contrato quitado','green'];
+  if(ap.status==='CANCELADO') return ['Contrato encerrado','gray'];
+  const atr=(ap.parcelas||[]).filter(p=>!p.pago&&diasEntre(p.venc,hoje())>0);
+  if(atr.length){ const et=etapas(ap), maior=Math.max(...atr.map(p=>diasEntre(p.venc,hoje())));
+    return [maior>=et.total?'Em atraso — aparelho bloqueado':maior>=et.parcial?'Em atraso — funções limitadas':`${atr.length} fatura(s) em atraso`,'red']; }
+  return ['Faturas em dia','green'];
+}
+
+/* ---------- PIX (BR Code estático) ---------- */
+const emv = (id,v) => id+String(v.length).padStart(2,'0')+v;
+function crc16(s){ let c=0xFFFF; for(let i=0;i<s.length;i++){ c^=s.charCodeAt(i)<<8; for(let j=0;j<8;j++) c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF; } return c.toString(16).toUpperCase().padStart(4,'0'); }
+function brcode(ap,valor,txid){
+  const chave=String(ap.chavePix||'').trim(); if(!chave) return null;
+  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9 ]/g,'').toUpperCase().trim();
+  let p=emv('00','01')+emv('26',emv('00','br.gov.bcb.pix')+emv('01',chave))+emv('52','0000')+emv('53','986')+emv('54',valor.toFixed(2))+emv('58','BR')
+    +emv('59',norm(ap.recebedor||'NEXUMCELL').slice(0,25)||'NEXUMCELL')+emv('60',norm(ap.cidadeRecebedor||'FOZ DO IGUACU').slice(0,15)||'FOZ DO IGUACU')
+    +emv('62',emv('05',String(txid||'***').replace(/[^A-Za-z0-9]/g,'').slice(0,25)||'***'))+'6304';
+  return p+crc16(p);
+}
+async function pagar(tk,n,valor,descricao){
+  const ap=S.aps[tk]; let codigo=null, auto=false, v=valor;
+  const serv=String(ap.servidorPix||'').trim().replace(/\/$/,'');
+  if(n>0&&serv.startsWith('https://')){
+    openModal('<p class="center"><span class="spin"></span> Gerando o PIX…</p>');
+    try{ const r=await fetch(serv+'/api/pix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk,n})}); if(r.ok){ const j=await r.json(); if(j.copiaECola){ codigo=j.copiaECola; v=j.valor||valor; auto=true; } } }catch(e){}
+  }
+  if(!codigo) codigo=brcode(ap,valor,`NXC${ap.vendaNumero}${n>0?'P'+n:'Q'}`);
+  if(!codigo){ openModal('<h2>PIX indisponível</h2><p>A loja ainda não cadastrou a chave PIX. Fale com a loja pelo WhatsApp.</p>'+zapLoja(ap)); return; }
+  let qr=''; try{ const q=qrcode(0,'M'); q.addData(codigo); q.make(); qr=q.createSvgTag({cellSize:4,margin:2,scalable:true}); }catch(e){}
+  openModal(`<h2>Pagar com PIX</h2><p class="center" style="margin:0"><b style="font-size:26px">${brl(v)}</b><br><span class="muted">${esc(descricao)}</span></p>
+    <div class="qr">${qr}</div><div class="cod" id="pixCod">${esc(codigo)}</div>
+    <button class="btn pri full" style="margin-top:12px" id="copiarPix">Copiar código PIX</button>
+    <p class="small muted">${auto?'O pagamento é confirmado sozinho: em poucos minutos a fatura aparece como paga e o aparelho é liberado.':'Abra o app do seu banco, escolha PIX copia e cola e cole o código. Depois envie o comprovante para a loja.'}</p>`);
+  $('#copiarPix').onclick=()=>navigator.clipboard?.writeText(codigo).then(()=>toast('Código copiado. Cole no app do banco.','ok'));
+}
+const zapLoja = ap => { const t=onlyDig(ap.lojaTelefone||ap.telefoneSuporte); return t?`<a class="btn green full" style="margin-top:10px" target="_blank" rel="noopener" href="https://wa.me/55${t}">Falar com a ${esc(ap.lojaNome||'loja')} no WhatsApp</a>`:''; };
+
+/* ---------- telas ---------- */
+const S = {aps:{}, tokens:[], falhas:0};
+function telaLogin(msg=''){
+  $('#sair').hidden=true;
+  $('#app').innerHTML=`<div class="hero"><small>Portal do cliente</small><b>Minhas faturas</b><span style="color:#C9D4EE">Veja suas parcelas, pague com PIX e acompanhe seu contrato.</span></div>
+  <form class="card" id="fLogin" autocomplete="on">
+    <label>CPF<input id="lCpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" required></label>
+    <label>Data de nascimento<input id="lNasc" type="date" required></label>
+    <label>4 últimos dígitos do celular cadastrado na compra<input id="lTel" inputmode="numeric" maxlength="4" placeholder="0000" required></label>
+    <div class="erro" id="lMsg">${esc(msg)}</div>
+    <button class="btn pri full" id="lBtn">Entrar</button>
+    <p class="small muted">Seus dados não são mostrados para ninguém. Problemas para entrar? Fale com a loja onde você comprou.</p>
+  </form>
+  <div class="card center"><b>Ainda não é cliente?</b><p class="muted" style="margin:4px 0 10px">Faça sua pré-análise de crédito pelo celular, sem compromisso.</p><a class="btn gold full" href="?pre${DEMO?'&demo':''}">Quero comprar um celular parcelado</a></div>`;
+  $('#lCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
+  $('#fLogin').addEventListener('submit',e=>{ e.preventDefault(); entrar(); });
+}
+async function entrar(){
+  const cpf=onlyDig($('#lCpf').value), nasc=$('#lNasc').value, tel=onlyDig($('#lTel').value), msg=$('#lMsg');
+  if(S.bloqAte>Date.now()) return msg.textContent=`Muitas tentativas. Aguarde ${Math.ceil((S.bloqAte-Date.now())/1000)} segundos.`;
+  if(!cpfOk(cpf)) return msg.textContent='CPF inválido.';
+  if(!nasc||tel.length!==4) return msg.textContent='Preencha a data de nascimento e os 4 dígitos do celular.';
+  $('#lBtn').disabled=true; msg.textContent='';
+  try{
+    let tokens=[];
+    if(fb){ const a=await DB.get('acessos',await chaveAcesso(cpf,nasc,tel)); tokens=a?.tokens||[]; }
+    else { const d=demoLer(); tokens=Object.values(d.vendas||{}).filter(v=>v.clienteCpf===cpf&&v.cliente?.nasc===nasc&&onlyDig((v.cliente?.telefones||[])[0]).slice(-4)===tel&&v.aparelhoToken).map(v=>v.aparelhoToken); }
+    if(!tokens.length){ S.falhas++; if(S.falhas>=5){ S.bloqAte=Date.now()+60000; S.falhas=0; } $('#lBtn').disabled=false; return msg.textContent='Não encontramos contrato com esses dados. Confira e tente de novo.'; }
+    S.tokens=tokens; sessionStorage.setItem('nxc_cli',JSON.stringify(tokens)); await telaContratos();
+  }catch(e){ console.error(e); msg.textContent='Não foi possível entrar agora. Verifique a internet e tente de novo.'; $('#lBtn').disabled=false; }
+}
+async function telaContratos(){
+  $('#sair').hidden=false;
+  const aps=(await Promise.all(S.tokens.map(tk=>DB.get('aparelhos',tk).catch(()=>null)))).filter(Boolean);
+  S.aps={}; aps.forEach(a=>S.aps[a.id]=a);
+  if(!aps.length){ sessionStorage.removeItem('nxc_cli'); return telaLogin('Contrato não encontrado.'); }
+  aps.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
+  if(!$('#chatBtn')) document.body.insertAdjacentHTML('beforeend','<button id="chatBtn" class="chat-btn" aria-label="Tirar dúvidas">💬 Dúvidas</button>');
+  $('#app').innerHTML=`<h1>Olá, ${esc(aps[0].clienteNome||'cliente')}!</h1><p class="muted" style="margin:0">${aps.length>1?aps.length+' contratos':'Seu contrato'} com a ${esc(aps[0].recebedor||'NexumCell')}</p>`+aps.map(cardContrato).join('');
+}
+function cardContrato(ap){
+  const [st,cor]=situacao(ap), tk=ap.id, ps=ap.parcelas||[], abertas=ps.filter(p=>!p.pago);
+  const prox=abertas[0], encerrado=ap.quitado||ap.status==='QUITADO'||ap.status==='CANCELADO';
+  const q=!encerrado&&abertas.length>1?quitacao(ap):null, roubo=ap.roubo&&!ap.roubo.liberadoEm;
+  const hp=prox?valorHoje(prox,ap):null;
+  return `<div class="card">
+    <div class="row" style="justify-content:space-between"><div><b>${esc((ap.marca||'')+' '+(ap.modelo||''))}</b><br><span class="small muted">Contrato nº ${esc(ap.vendaNumero)} · ${esc(ap.lojaNome||'')}</span></div><span class="badge b-${cor}">${esc(st)}</span></div>
+    ${roubo?`<div class="aviso bad"><b>Você comunicou ${esc(String(ap.roubo.tipo).toLowerCase())} em ${fmtDT(ap.roubo.em)}.</b> O aparelho foi travado. As parcelas continuam valendo.<br>${guiaRoubo(ap.roubo.tipo)}</div>`:''}
+    ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?(()=>{ const et=etapas(ap); return hp.dias<et.parcial?`<div class="aviso warn"><b>Faltam ${et.parcial-hp.dias} dia(s) para limitar as funções</b> (redes sociais e vídeos) e ${et.total-hp.dias} dia(s) para o bloqueio total. Pague agora para evitar.</div>`:hp.dias<et.total?`<div class="aviso bad">Redes sociais e vídeos estão bloqueados. <b>Faltam ${et.total-hp.dias} dia(s) para o bloqueio total.</b> Pague agora para liberar.</div>`:''; })():''}
+    ${ap.vip&&!encerrado?`<div class="aviso ok"><b>${ap.vip==='Ouro'?'🥇':'🥈'} Cliente VIP ${esc(ap.vip)}</b><br><span class="small">Você é um dos nossos melhores pagadores. Na próxima compra, seus juros são menores.</span></div>`:''}
+    ${!encerrado&&ap.criadoEm&&Date.now()-ap.criadoEm<=(+ap.trocaDias||7)*86400000?`<div class="aviso" style="background:#EEF4FF;border-color:#C9D6F2"><b>Garantia de troca</b><br><span class="small">Até ${fmtD(new Date(ap.criadoEm+(+ap.trocaDias||7)*86400000).toISOString().slice(0,10))} você pode trocar o aparelho com defeito ou devolver, na loja, com caixa e acessórios.</span></div>`:''}
+    ${ap.preAprovado&&!roubo?`<div class="aviso ok"><b>🎉 Você tem crédito pré-aprovado para trocar de celular!</b><br>Por ser um ótimo pagador, passe na ${esc(ap.preAprovado.loja||ap.lojaNome||'loja')} para ver os modelos.</div>`:''}
+    ${encerrado?`<div class="aviso ok">${ap.status==='CANCELADO'?'Este contrato foi encerrado.':'Parabéns! Contrato quitado e trava removida do aparelho.'}</div>`:''}
+    ${prox&&!encerrado?`<div class="aviso ${hp.tipo==='atraso'?'bad':'warn'}" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div>${hp.tipo==='atraso'?`<b>Parcela ${prox.n} atrasada há ${hp.dias} dia(s)</b><br>Com multa e juros:`:hp.tipo==='hoje'?`<b>Parcela ${prox.n} vence hoje</b>`:`<b>Próxima: parcela ${prox.n} — vence ${fmtD(prox.venc)}</b><br>Pagando antes do vencimento: ${Number(ap.descontoPct)||0}% de desconto`}</div>
+        <div style="text-align:right"><b style="font-size:20px">${brl(hp.valor)}</b></div></div>
+      <button class="btn gold full" style="margin-top:10px" data-pagar="${tk}" data-n="${prox.n}" data-v="${hp.valor}">Pagar parcela ${prox.n} com PIX</button>`:''}
+    <h3>Faturas</h3>
+    <div>${ps.map(p=>{ const h=valorHoje(p,ap);
+      return `<div class="parc"><div><b>Parcela ${p.n}/${ps.length}</b><br><span class="small muted">vence ${fmtD(p.venc)}</span></div>
+        ${p.pagoParcial&&!p.pago?`<span class="small muted" style="display:block">já pago ${brl(p.pagoParcial)}</span>`:''}<div class="v">${p.pago?`<span class="badge b-green">Paga</span><span class="small muted">${brl(p.valorPago??p.valor)}</span><br><button class="btn sm" style="margin-top:6px" data-recibo="${tk}" data-n="${p.n}">Recibo</button>`:`<b>${brl(h.valor)}</b>${h.tipo==='atraso'?`<span class="badge b-red">${h.dias} dia(s) em atraso</span>`:h.tipo==='antecipado'?`<span class="small muted">com desconto</span>`:'<span class="badge b-amber">vence hoje</span>'}
+          ${!encerrado?`<br><button class="btn sm" style="margin-top:6px" data-pagar="${tk}" data-n="${p.n}" data-v="${h.valor}">Pagar</button>${p.asaasLink?` <a class="btn sm" style="margin-top:6px" target="_blank" rel="noopener" href="${esc(p.asaasLink)}">Boleto ou cartão</a>`:''}`:''}`}</div></div>`; }).join('')}</div>
+    ${q&&q.total>0?`<div class="aviso ok" style="margin-top:14px"><b>Quitar o contrato hoje: ${brl(q.total)}</b><br>Você economiza ${brl(q.desconto)} nas parcelas que ainda não venceram.
+      <button class="btn green full" style="margin-top:8px" data-pagar="${tk}" data-n="0" data-v="${q.total}">Quitar com PIX</button></div>`:''}
+    ${!encerrado&&!roubo&&String(ap.servidorPix||'').startsWith('https://')&&ap.pixAutomatico?.status!=='ATIVO'&&abertas.length>1?`<div class="aviso ok" style="margin-top:14px"><b>Débito automático no PIX</b><br><span class="small">Nunca mais atrase: você paga a próxima parcela agora (com desconto) e autoriza o débito das próximas no app do seu banco. Dá para cancelar no próprio banco.</span><button class="btn green full" style="margin-top:8px" data-pixauto="${tk}">Ativar débito automático</button></div>`:''}
+    ${ap.pixAutomatico?.status==='ATIVO'?'<div class="aviso ok" style="margin-top:14px">✅ <b>Débito automático no PIX ativo.</b> As parcelas são pagas sozinhas no vencimento.</div>':''}
+    ${(()=>{ const pt=pontos(ap); return pt.pp?`<div class="aviso ok" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>⭐ ${pt.saldo} pontos</b><br><span class="small">Cada parcela paga em dia vale ${pt.pp} pontos. Troque na loja por desconto em acessórios ou no próximo celular.</span></div><b style="font-size:18px">${brl(pt.reais)}</b></div>`:''; })()}
+    ${(ap.quitado||ap.status==='QUITADO')?`<button class="btn full" style="margin-top:12px" data-termo="${tk}">Baixar termo de quitação</button>`:''}
+    ${!encerrado&&!roubo&&!ap.avaliado&&!localStorage.getItem('nxc_nps_'+tk)?`<div class="aviso warn" style="margin-top:14px"><b>Como foi o seu atendimento na compra?</b><div class="nps">${Array.from({length:11},(_,i)=>`<button data-nps="${tk}" data-n="${i}">${i}</button>`).join('')}</div><span class="small">0 = muito ruim · 10 = excelente</span></div>`:''}
+    ${blocoPedidos(ap)}
+    ${ap.status!=='CANCELADO'?`<div class="aviso ok" style="margin-top:14px"><b>Indique um amigo e ganhe desconto!</b><br>Quando um amigo seu comprar com o código <b class="mono">NXC-${esc(ap.vendaNumero)}</b>, você ganha desconto na sua última parcela.
+      <a class="btn sm" style="margin-top:8px" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Comprei meu celular parcelado na ${ap.lojaNome||'NexumCell'}. Se for comprar lá, use meu código de indicação NXC-${ap.vendaNumero}!`)}">Enviar para um amigo</a></div>`:''}
+    <div class="row" style="margin-top:14px;gap:8px">
+      ${!encerrado&&!roubo?`<button class="btn sm" style="color:var(--bad);border-color:#F2C9C9" data-roubo="${tk}">Roubo, furto ou perda</button>`:''}
+      ${ap.status!=='CANCELADO'?`<button class="btn sm" data-pedido="${tk}" data-tipo="ASSISTENCIA">Meu aparelho deu defeito</button>`:''}
+      ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
+      <button class="btn sm" data-pedido="${tk}" data-tipo="LGPD">Meus dados (LGPD)</button></div>
+    ${zapLoja(ap)}
+  </div>`;
+}
+function guiaRoubo(tipo){
+  return `<ol style="margin:8px 0 0;padding-left:20px">
+    <li>${tipo==='Roubo'?'Ligue <b>190</b> e registre o boletim de ocorrência na delegacia.':`Registre o boletim de ocorrência: <a target="_blank" rel="noopener" href="${LINKS.boFurto}">Delegacia Eletrônica do Paraná</a>.`}</li>
+    <li>Bloqueie o celular, o chip e os apps de banco no <a target="_blank" rel="noopener" href="${LINKS.celularSeguro}">Celular Seguro</a> (conta gov.br).</li>
+    <li>Peça à sua operadora o bloqueio da linha e um chip novo com o mesmo número.</li>
+    <li>Envie o número do boletim para a loja pelo WhatsApp.</li></ol>`;
+}
+function formRoubo(tk){
+  const ap=S.aps[tk];
+  openModal(`<h2>Comunicar roubo, furto ou perda</h2><p class="muted" style="margin-top:-4px">${esc(ap.marca+' '+ap.modelo)} · contrato nº ${esc(ap.vendaNumero)}</p>
+    <div class="aviso warn">O aparelho será <b>travado</b> assim que se conectar à internet, para que ninguém consiga usá-lo. As parcelas continuam valendo normalmente.</div>
+    <label>O que aconteceu?<select id="rTipo"><option>Roubo</option><option>Furto</option><option>Perda</option></select></label>
+    <label>Quando?<input id="rData" type="date" value="${hoje()}" max="${hoje()}"></label>
+    <label>Onde? (bairro, cidade)<input id="rLocal" maxlength="120"></label>
+    <label>Número do boletim de ocorrência (se já tiver)<input id="rBo" maxlength="40"></label>
+    <label>Conte o que aconteceu (opcional)<textarea id="rRelato" rows="2" maxlength="400"></textarea></label>
+    <label class="check"><input type="checkbox" id="rOk"> <span>Confirmo que o aparelho não está comigo e quero que ele seja travado.</span></label>
+    <label class="check"><input type="checkbox" id="rLoc"> <span>Autorizo a loja a localizar o aparelho enquanto ele estiver com comunicação de roubo ativa, para ajudar a recuperá-lo (pode informar à polícia).</span></label>
+    <div class="erro" id="rMsg"></div>
+    <button class="btn red full" id="rBtn">Comunicar e travar o aparelho</button>`);
+  $('#rBtn').onclick=async()=>{
+    if(!$('#rOk').checked) return $('#rMsg').textContent='Marque a confirmação.';
+    if(!$('#rLocal').value.trim()) return $('#rMsg').textContent='Informe onde aconteceu.';
+    $('#rBtn').disabled=true;
+    const roubo={tipo:$('#rTipo').value,data:$('#rData').value||hoje(),local:$('#rLocal').value.trim(),bo:$('#rBo').value.trim(),relato:$('#rRelato').value.trim(),em:Date.now(),via:'PORTAL',localizar:$('#rLoc').checked};
+    try{ await DB.set('aparelhos',tk,{roubo}); S.aps[tk].roubo=roubo;
+      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Comunicado recebido</h2><p>O aparelho será travado assim que se conectar à internet. A loja já foi avisada.</p></div>
+        <div class="aviso warn"><b>Agora faça isto:</b>${guiaRoubo(roubo.tipo)}</div>${zapLoja(S.aps[tk])}`);
+      telaContratos();
+    }catch(e){ console.error(e); $('#rMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#rBtn').disabled=false; }
+  };
+}
+
+/* ---------- pontos, recibos e termo de quitação ---------- */
+function pontos(ap){ const pp=Number(ap.pontosPorParcela)||0, ganhos=(ap.parcelas||[]).filter(p=>p.emDia).length*pp, saldo=Math.max(0,ganhos-(Number(ap.pontosUsados)||0));
+  return {pp,saldo,reais:r2(saldo/100*(Number(ap.pontosValor)||0))}; }
+function imprimir(titulo,corpo){
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(titulo)}</title>
+    <style>body{font-family:Georgia,serif;max-width:680px;margin:24px auto;padding:0 18px;color:#111;line-height:1.6}h1{font-family:Arial,sans-serif;font-size:19px;text-align:center}.cab{font-family:Arial,sans-serif;font-size:12px;color:#555;text-align:center;margin-bottom:18px}
+    table{width:100%;border-collapse:collapse;margin:12px 0}td{border:1px solid #ccc;padding:8px;font-size:14px}@media print{button{display:none}}</style></head>
+    <body>${corpo}<p style="text-align:center;margin-top:26px"><button onclick="print()" style="padding:10px 18px;font-size:15px">Salvar em PDF / imprimir</button></p></body></html>`;
+  const w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank'); if(!w) toast('Permita abrir janelas para ver o comprovante','err');
+}
+function recibo(tk,n){
+  const ap=S.aps[tk], p=(ap.parcelas||[]).find(x=>x.n===n); if(!p) return;
+  imprimir(`Recibo parcela ${n}`,`<h1>RECIBO DE PAGAMENTO</h1><div class="cab">${esc(ap.recebedor||'NexumCell')} · ${esc(ap.lojaNome||'')}</div>
+    <p>Recebemos de <b>${esc(ap.clienteNome)}</b> o valor de <b>${brl(p.valorPago??p.valor)}</b>, referente à parcela <b>${p.n}/${(ap.parcelas||[]).length}</b> do contrato nº <b>${esc(ap.vendaNumero)}</b> (aparelho ${esc((ap.marca||'')+' '+(ap.modelo||''))}).</p>
+    <table><tr><td>Vencimento</td><td>${fmtD(p.venc)}</td></tr><tr><td>Data do pagamento</td><td>${fmtD(p.pagoEm)}</td></tr><tr><td>Valor da parcela</td><td>${brl(p.valor)}</td></tr><tr><td>Valor pago</td><td>${brl(p.valorPago??p.valor)}</td></tr></table>
+    <p class="cab">Comprovante emitido pelo portal do cliente em ${fmtDT(Date.now())}.</p>`);
+}
+function termo(tk){
+  const ap=S.aps[tk];
+  imprimir('Termo de quitação',`<h1>TERMO DE QUITAÇÃO</h1><div class="cab">${esc(ap.recebedor||'NexumCell')} · ${esc(ap.lojaNome||'')}</div>
+    <p>Declaramos que o contrato de compra e venda a prazo nº <b>${esc(ap.vendaNumero)}</b>, em nome de <b>${esc(ap.clienteNome)}</b>, referente ao aparelho ${esc((ap.marca||'')+' '+(ap.modelo||''))}, IMEI ${esc(ap.imei||'')}, está <b>integralmente quitado</b>, sem nenhum valor pendente.</p>
+    <p>Com a quitação, a propriedade plena do aparelho passa ao(à) comprador(a) e o sistema de bloqueio foi removido de forma definitiva.</p>
+    <p class="cab">Emitido pelo portal do cliente em ${fmtDT(Date.now())}. A loja pode emitir a via assinada a pedido do cliente.</p>`);
+}
+
+/* ---------- assistente: tira dúvidas sobre o contrato ---------- */
+function respostaLocal(txt){
+  const t=normNome(txt), aps=Object.values(S.aps), ap=aps[0]; if(!ap) return 'Entre com seus dados para eu consultar seu contrato.';
+  const ab=(ap.parcelas||[]).filter(p=>!p.pago), atr=ab.filter(p=>diasEntre(p.venc,hoje())>0), prox=ab[0];
+  const soma=atr.reduce((s,p)=>s+valorHoje(p,ap).valor,0);
+  if(/DEVO|DIVIDA|ATRAS|DEBITO|EM ABERTO/.test(t)) return atr.length?`Você tem ${atr.length} parcela(s) em atraso, que hoje somam ${brl(soma)} já com multa e juros. Toque em “Pagar” na parcela para gerar o PIX.`:`Você está em dia! ${prox?`A próxima parcela (${prox.n}) vence ${fmtD(prox.venc)}: ${brl(valorHoje(prox,ap).valor)} pagando até lá.`:''}`;
+  if(/PIX|PAGAR|PAGAMENTO|BOLETO|CHAVE/.test(t)) return prox?`Para pagar, toque em “Pagar” na parcela ${prox.n} aqui em cima: aparece o QR code e o código PIX copia e cola. ${ap.chavePix?'A chave PIX da loja é '+ap.chavePix+'.':''}`:'Seu contrato não tem parcelas em aberto.';
+  if(/VENC|QUANDO|DATA|DIA/.test(t)) return prox?`A parcela ${prox.n} vence ${fmtD(prox.venc)}. Pagando antes, você ganha ${Number(ap.descontoPct)||0}% de desconto. Se quiser mudar o dia do vencimento, use o botão “Mudar dia do vencimento”.`:'Não há parcelas em aberto.';
+  if(/QUIT|ANTECIP|ADIANT|TERMINAR|FINALIZAR/.test(t)){ const q=quitacao(ap); return ab.length?`Para quitar hoje, o valor é ${brl(q.total)} (economia de ${brl(q.desconto)}). Use o botão “Quitar com PIX”.`:'Seu contrato já está quitado. Você pode baixar o termo de quitação aqui no portal.'; }
+  if(/BLOQUE|TRAV|LIBER|DESBLOQ/.test(t)) return atr.length?`O aparelho é limitado ou bloqueado quando há parcela em atraso. Pague ${brl(soma)} e ele é liberado sozinho em poucos minutos (ou toque em “Já paguei — verificar” no celular). Na tela de bloqueio também existe a liberação de 24 h, uma vez por mês.`:'Seu contrato está em dia, então o aparelho não deve estar bloqueado. Se estiver, abra o NexumCell no celular e toque em “Já paguei — verificar” com a internet ligada.';
+  if(/PONTO/.test(t)){ const pt=pontos(ap); return `Você tem ${pt.saldo} pontos (${brl(pt.reais)}). Use na loja como desconto em acessórios ou no próximo celular.`; }
+  if(/ROUB|FURT|PERD/.test(t)) return 'Sinto muito! Toque em “Roubo, furto ou perda” no seu contrato: o aparelho é travado e mostramos o passo a passo do boletim e do bloqueio do IMEI.';
+  if(/DEFEIT|QUEBR|CONSERT|GARANT|TELA/.test(t)) return 'Toque em “Meu aparelho deu defeito” e descreva o problema. A loja responde por aqui e pelo WhatsApp.';
+  if(/ATENDENTE|PESSOA|HUMANO|LOJA|WHATS|FALAR/.test(t)) return `Claro! Fale com a ${ap.lojaNome||'loja'} pelo botão do WhatsApp no seu contrato${ap.lojaTelefone?' ou pelo número '+ap.lojaTelefone:''}.`;
+  return null;
+}
+async function perguntar(txt){
+  const box=$('#chatMsgs'); const add=(quem,t)=>{ box.insertAdjacentHTML('beforeend',`<div class="bolha ${quem}">${esc(t)}</div>`); box.scrollTop=box.scrollHeight; };
+  add('eu',txt); let r=respostaLocal(txt);
+  const ap=Object.values(S.aps)[0], serv=String(ap?.servidorPix||'').trim().replace(/\/$/,'');
+  if(!r&&serv.startsWith('https://')){ add('ia','…'); try{ const x=await fetch(serv+'/api/assistente',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:ap.id,pergunta:txt.slice(0,500)})}); if(x.ok) r=(await x.json()).resposta; }catch(e){} box.lastElementChild.remove(); }
+  add('ia',r||'Não entendi bem. Você pode perguntar, por exemplo: “quanto eu devo?”, “quando vence?”, “como quito?” ou “falar com atendente”.');
+}
+function abrirChat(){
+  openModal(`<h2>Assistente NexumCell</h2><div id="chatMsgs" class="chat"><div class="bolha ia">Olá! Posso ajudar com suas parcelas, PIX, quitação, desbloqueio e pedidos. O que você precisa?</div></div>
+    <div class="row" style="margin-top:8px;gap:6px">${['Quanto eu devo?','Quando vence?','Como quito?','Meu celular travou','Falar com atendente'].map(q=>`<button class="btn sm" data-q="${q}">${q}</button>`).join('')}</div>
+    <form id="chatF" class="row" style="margin-top:10px"><input id="chatIn" placeholder="Escreva sua dúvida" style="flex:1" autocomplete="off"><button class="btn pri">Enviar</button></form>`);
+  $('#chatF').onsubmit=e=>{ e.preventDefault(); const v=$('#chatIn').value.trim(); if(v){ $('#chatIn').value=''; perguntar(v); } };
+}
+
+/* ---------- pré-análise online ---------- */
+async function telaPre(id){
+  $('#sair').hidden=true;
+  if(id){ const x=await DB.get('preanalises',id).catch(()=>null);
+    if(!x){ $('#app').innerHTML='<div class="card center"><h2>Pré-análise não encontrada</h2></div>'; return; }
+    const st={NOVA:['Recebida — aguardando a análise','b-blue'],CONTATADO:['Em análise — vamos falar com você','b-amber'],PRE_APROVADO:['Pré-aprovado!','b-green'],RECUSADA:['Não aprovada no momento','b-gray'],VIROU_VENDA:['Compra concluída','b-green']}[x.status]||[x.status,'b-gray'];
+    $('#app').innerHTML=`<div class="hero"><small>Pré-análise de crédito</small><b style="font-size:22px">${esc(primeiroNome(x.nome))}</b><span style="color:#C9D4EE">${esc(x.aparelho||'')} · ${esc(x.lojaNome||'')}</span></div>
+      <div class="card center"><span class="badge ${st[1]}" style="font-size:15px">${st[0]}</span>${x.resposta?`<p style="margin-top:12px">${esc(x.resposta)}</p>`:'<p class="muted" style="margin-top:12px">A loja costuma responder no mesmo dia, em horário comercial.</p>'}
+      <p class="small muted">Protocolo: <span class="mono">${esc(id)}</span> · enviada em ${fmtDT(x.criadoEm)}</p><p class="small muted">Guarde este link para acompanhar.</p></div>
+      ${x.status==='PRE_APROVADO'?(x.agendamento?`<div class="card center"><b>Retirada agendada</b><p>${fmtD(x.agendamento.data)} às ${esc(x.agendamento.hora)} na ${esc(x.lojaNome||'loja')}. Traga RG ou CNH.</p><button class="btn sm" id="agMudar">Mudar horário</button></div>`:'')+`<form class="card" id="fAg" ${x.agendamento?'hidden':''}><b>Agende a retirada do seu celular</b><p class="small muted" style="margin:4px 0 0">Na loja você só confirma o documento, faz a biometria, assina e leva o aparelho.</p>
+        <div class="row" style="gap:10px"><label style="flex:1">Dia<input id="agData" type="date" min="${hoje()}" required></label><label style="flex:1">Horário<select id="agHora">${['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00'].map(h=>`<option>${h}</option>`).join('')}</select></label></div>
+        <button class="btn gold full" style="margin-top:12px">Agendar retirada</button></form>`:''}`;
+    $('#agMudar')?.addEventListener('click',()=>{ $('#fAg').hidden=false; });
+    $('#fAg')?.addEventListener('submit',async e=>{ e.preventDefault(); try{ await DB.set('preanalises',id,{agendamento:{data:$('#agData').value,hora:$('#agHora').value,em:Date.now()}}); toast('Retirada agendada!','ok'); telaPre(id); }catch(err){ toast('Não foi possível agendar. Fale com a loja.','err'); } });
+    return; }
+  const vit=await DB.get('publico','vitrine').catch(()=>null)||{aparelhos:[],lojas:[],entradaPct:30};
+  $('#app').innerHTML=`<div class="hero"><small>${esc(vit.empresa||'NexumCell')}</small><b style="font-size:22px">Celular parcelado sem cartão</b><span style="color:#C9D4EE">Faça a pré-análise em 2 minutos. Entrada a partir de ${vit.entradaPct||30}%.</span></div>
+    <form class="card" id="fPre">
+      <label>Nome completo<input id="pNome" required maxlength="120" autocomplete="name"></label>
+      <div class="row" style="gap:10px"><label style="flex:1">CPF<input id="pCpf" inputmode="numeric" required></label><label style="flex:1">Nascimento<input id="pNasc" type="date" required></label></div>
+      <label>WhatsApp<input id="pTel" inputmode="tel" required placeholder="(45) 99999-9999"></label>
+      <div class="row" style="gap:10px"><label style="flex:1">Renda mensal (R$)<input id="pRenda" type="number" min="0" step="0.01" required></label><label style="flex:1">Profissão<input id="pProf" maxlength="60" required></label></div>
+      <label>Cidade<input id="pCid" maxlength="60" value="Foz do Iguaçu"></label>
+      <label>Qual celular você quer?<select id="pAp"><option value="">Ainda não sei</option>${(vit.aparelhos||[]).map((a,i)=>`<option value="${i}">${esc(a.marca+' '+a.modelo+' '+a.capacidade)} — ${brl(a.preco)}</option>`).join('')}</select></label>
+      <div id="pSim" class="small muted"></div>
+      <label>Quanto você tem de entrada (R$)?<input id="pEnt" type="number" min="0" step="0.01"></label>
+      <label>Loja mais perto<select id="pLoja">${(vit.lojas||[]).map(l=>`<option value="${l.id}">${esc(l.nome)}${l.cidade?' — '+esc(l.cidade):''}</option>`).join('')}</select></label>
+      <label class="check"><input type="checkbox" id="pOk"> <span>Autorizo a loja a usar estes dados para análise de crédito e contato pelo WhatsApp (LGPD).</span></label>
+      <div class="erro" id="pMsg"></div><button class="btn gold full" id="pBtn">Enviar pré-análise</button>
+      <p class="small muted">A pré-análise não é a aprovação final: na loja confirmamos seu documento e fazemos a biometria.</p></form>`;
+  $('#pCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
+  const sim=()=>{ const a=vit.aparelhos[$('#pAp').value]; if(!a){ $('#pSim').textContent=''; return; } const ent=r2(a.preco*(vit.entradaPct||30)/100), fin=a.preco-ent, n=Math.max(...String(vit.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), p=fin*(1+(a.juros??vit.jurosPadrao??25)/100)/n;
+    $('#pSim').innerHTML=`Exemplo: entrada de <b>${brl(ent)}</b> + <b>${n}x de ${brl(p)}</b>. Os valores finais são confirmados na loja.`; if(!$('#pEnt').value) $('#pEnt').value=ent; };
+  $('#pAp').addEventListener('change',sim);
+  $('#fPre').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('#pMsg'); m.textContent='';
+    const cpf=onlyDig($('#pCpf').value), tel=onlyDig($('#pTel').value), a=vit.aparelhos[$('#pAp').value], loja=(vit.lojas||[]).find(l=>l.id===$('#pLoja').value)||{};
+    if(!cpfOk(cpf)) return m.textContent='CPF inválido.'; if(tel.length<10) return m.textContent='WhatsApp com DDD.';
+    const idade=$('#pNasc').value?Math.floor((Date.now()-new Date($('#pNasc').value))/31557600000):0; if(idade<18) return m.textContent='É preciso ter 18 anos ou mais.';
+    if(!$('#pOk').checked) return m.textContent='Marque a autorização para continuar.';
+    $('#pBtn').disabled=true;
+    try{ const id=await DB.add('preanalises',{nome:$('#pNome').value.trim().slice(0,120),cpf,nasc:$('#pNasc').value,telefone:tel,cidade:$('#pCid').value.trim(),renda:+$('#pRenda').value||0,profissao:$('#pProf').value.trim(),
+        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now()});
+      history.replaceState(null,'',`?pre=${id}${DEMO?'&demo':''}`);
+      $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pré-análise enviada!</h2><p>A ${esc(loja.nome||'loja')} vai analisar e chamar você no WhatsApp. Você também pode acompanhar por este link.</p>
+        <p class="small muted">Protocolo <span class="mono">${esc(id)}</span></p>${loja.telefone?`<a class="btn green full" target="_blank" rel="noopener" href="https://wa.me/55${onlyDig(loja.telefone)}?text=${encodeURIComponent('Olá! Acabei de fazer a pré-análise (protocolo '+id+').')}">Avisar a loja no WhatsApp</a>`:''}</div>`;
+    }catch(err){ console.error(err); m.textContent='Não foi possível enviar agora. Tente de novo.'; $('#pBtn').disabled=false; }
+  });
+}
+
+/* ---------- PIX Automático (Asaas) ---------- */
+async function ativarPixAutomatico(tk){
+  const ap=S.aps[tk], serv=String(ap.servidorPix||'').trim().replace(/\/$/,'');
+  openModal('<p class="center"><span class="spin"></span> Preparando o débito automático…</p>');
+  try{ const r=await fetch(serv+'/api/pix-automatico',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk})}), j=await r.json();
+    if(j.jaAtivo){ openModal('<h2>Já está ativo</h2><p>O débito automático deste contrato já está funcionando.</p>'); return; }
+    if(!r.ok||!j.copiaECola) throw new Error(j.erro||'sem QR');
+    let qr=''; try{ const q=qrcode(0,'M'); q.addData(j.copiaECola); q.make(); qr=q.createSvgTag({cellSize:4,margin:2,scalable:true}); }catch(e){}
+    openModal(`<h2>Ativar débito automático</h2><p class="center" style="margin:0">Pague agora <b style="font-size:22px">${brl(j.valor)}</b><br><span class="muted">e autorize o débito de ${brl(j.valorMensal)} por mês nas próximas parcelas</span></p>
+      <div class="qr">${qr}</div><div class="cod">${esc(j.copiaECola)}</div><button class="btn pri full" style="margin-top:12px" id="paCop">Copiar código PIX</button>
+      <p class="small muted">No app do banco, confirme o pagamento e a autorização do PIX Automático. Em poucos minutos o portal mostra “débito automático ativo”.</p>`);
+    $('#paCop').onclick=()=>navigator.clipboard?.writeText(j.copiaECola).then(()=>toast('Código copiado','ok'));
+  }catch(e){ openModal('<h2>Não foi possível agora</h2><p>Tente mais tarde ou fale com a loja.</p>'+zapLoja(ap)); }
+}
+
+/* ---------- nota do atendimento ---------- */
+function formNps(tk,n){
+  openModal(`<h2>Nota ${n}</h2><label>Quer contar o motivo? (opcional)<textarea id="npsTxt" rows="3" maxlength="400"></textarea></label><button class="btn pri full" style="margin-top:12px" id="npsOk">Enviar avaliação</button>`);
+  $('#npsOk').onclick=async()=>{ const ap=S.aps[tk]; $('#npsOk').disabled=true;
+    try{ await DB.set('avaliacoes',tk,{token:tk,vendaId:ap.vendaId||'',lojaId:ap.lojaId||'',nota:n,comentario:$('#npsTxt').value.trim(),em:Date.now()}); }catch(e){ console.error(e); }
+    try{ localStorage.setItem('nxc_nps_'+tk,'1'); }catch(e){} openModal('<div class="center"><div class="ic ok">'+svg('<path d="M20 6 9 17l-5-5"/>')+'</div><h2>Obrigado!</h2><p>Sua opinião ajuda a loja a melhorar.</p></div>'); telaContratos(); };
+}
+
+/* ---------- pedidos: assistência técnica e LGPD ---------- */
+const PED_TIPO={VENCIMENTO:'Mudança do dia de vencimento',ASSISTENCIA:'Assistência técnica',LGPD_COPIA:'Cópia dos meus dados',LGPD_EXCLUSAO:'Exclusão dos meus dados'};
+const PED_ST={ABERTO:'Recebido — aguardando a loja',RECEBIDO:'Aparelho na loja',EM_REPARO:'Em conserto',PRONTO:'Pronto para retirar',ENTREGUE:'Entregue',RECUSADO:'Sem cobertura da garantia',ATENDIDO:'Atendido'};
+const pedLocais = tk => { try{ return JSON.parse(localStorage.getItem('nxc_ped_'+tk))||{}; }catch(e){ return {}; } };
+function blocoPedidos(ap){
+  const l={...pedLocais(ap.id),...(ap.pedidos||{})}, ks=Object.keys(l).sort((a,b)=>(l[b].criadoEm||0)-(l[a].criadoEm||0));
+  if(!ks.length) return '';
+  return `<h3>Meus pedidos</h3>${ks.map(k=>{ const x=l[k]; return `<div class="parc"><div><b>${esc(PED_TIPO[x.tipo]||x.tipo)}</b><br><span class="small muted">${fmtDT(x.criadoEm)}${x.resposta?' · '+esc(x.resposta):''}</span></div><span class="badge ${['ENTREGUE','ATENDIDO'].includes(x.status)?'b-green':x.status==='RECUSADO'?'b-gray':'b-blue'}">${esc(PED_ST[x.status]||x.status)}</span></div>`; }).join('')}`;
+}
+function formPedido(tk,tipo){
+  const ap=S.aps[tk];
+  if(tipo==='VENCIMENTO') openModal(`<h2>Mudar o dia do vencimento</h2><p class="muted" style="margin-top:-4px">Escolha o dia que fica melhor para você, por exemplo o dia depois do seu pagamento. Só é possível mudar <b>uma vez</b> por contrato e os valores não mudam.</p>
+    <label>Novo dia de vencimento<select id="pdDia">${Array.from({length:28},(_,i)=>`<option ${i+1===10?'selected':''}>${i+1}</option>`).join('')}</select></label>
+    <label>Por que? (opcional)<input id="pdDesc" maxlength="200" placeholder="ex.: recebo o salário dia 5"></label>
+    <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Pedir a mudança</button>`);
+  else if(tipo==='ASSISTENCIA') openModal(`<h2>Assistência técnica</h2><p class="muted" style="margin-top:-4px">${esc(ap.marca+' '+ap.modelo)} · contrato nº ${esc(ap.vendaNumero)}</p>
+    <label>O que está acontecendo com o aparelho?<textarea id="pdDesc" rows="3" maxlength="500" placeholder="ex.: a tela apaga sozinha, não carrega, o alto-falante não funciona"></textarea></label>
+    <p class="small muted">A loja vai analisar e combinar com você a entrega do aparelho. Defeitos causados por queda, água ou mau uso não têm cobertura da garantia.</p>
+    <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar pedido</button>`);
+  else openModal(`<h2>Meus dados (LGPD)</h2><p class="muted" style="margin-top:-4px">A Lei Geral de Proteção de Dados garante que você saiba quais dados seus a loja guarda.</p>
+    <label>O que você quer?<select id="pdTipo"><option value="LGPD_COPIA">Receber uma cópia dos meus dados</option><option value="LGPD_EXCLUSAO">Pedir a exclusão dos meus dados</option></select></label>
+    <label>Observação (opcional)<textarea id="pdDesc" rows="2" maxlength="300"></textarea></label>
+    <p class="small muted">Enquanto o contrato estiver ativo, os dados precisam ser mantidos para cumprir o contrato e a lei. Depois do encerramento, as fotos do documento e a biometria podem ser apagadas. A resposta chega em até 15 dias.</p>
+    <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar pedido</button>`);
+  $('#pdBtn').onclick=async()=>{
+    const t=tipo==='ASSISTENCIA'||tipo==='VENCIMENTO'?tipo:$('#pdTipo').value, desc=$('#pdDesc').value.trim();
+    if(t==='ASSISTENCIA'&&desc.length<10) return $('#pdMsg').textContent='Descreva o defeito com um pouco mais de detalhe.';
+    $('#pdBtn').disabled=true;
+    const d={tipo:t,token:tk,vendaId:ap.vendaId||'',vendaNumero:ap.vendaNumero||0,lojaId:ap.lojaId||'',lojaNome:ap.lojaNome||'',clienteNome:ap.clienteNome||'',marca:ap.marca||'',modelo:ap.modelo||'',imei:ap.imei||'',descricao:t==='VENCIMENTO'?`Novo dia: ${$('#pdDia').value}${desc?' · '+desc:''}`:desc,status:'ABERTO',criadoEm:Date.now(),...(t==='VENCIMENTO'?{novoDia:+$('#pdDia').value}:{})};
+    try{ const id=await DB.add('pedidos',d); const l=pedLocais(tk); l[id]={tipo:t,status:'ABERTO',criadoEm:d.criadoEm}; try{ localStorage.setItem('nxc_ped_'+tk,JSON.stringify(l)); }catch(e){}
+      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>A loja já recebeu e vai responder por aqui${t==='ASSISTENCIA'?' e pelo WhatsApp':''}.</p></div>${zapLoja(ap)}`); telaContratos();
+    }catch(e){ console.error(e); $('#pdMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#pdBtn').disabled=false; }
+  };
+}
+
+/* ---------- assinatura do contrato no celular do cliente ---------- */
+async function telaAssinar(tk){
+  const a=await DB.get('assinaturas',tk).catch(()=>null);
+  if(!a){ $('#app').innerHTML=`<div class="card center"><div class="ic bad">${svg('<path d="M18 6 6 18M6 6l12 12"/>')}</div><h2>Link inválido</h2><p class="muted">Peça um novo link para a loja.</p></div>`; return; }
+  if(a.status==='ASSINADO'){
+    $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Contrato assinado</h2>
+      <p class="muted">Contrato nº ${esc(a.numero||'')} · assinado em ${fmtDT(a.assinadoEm)} ${a.via==='LOJA'?'na loja':'no celular do comprador'}.</p>
+      ${a.codigo?`<p>Código de verificação: <b class="mono">${esc(a.codigo)}</b></p><p class="cod">SHA-256: ${esc(a.hash)}</p>`:'<p class="small muted">O código de verificação aparece assim que a loja registrar a assinatura.</p>'}</div>
+      <div class="card"><h2>Texto do contrato</h2><div class="contrato">${a.contrato||''}</div>${a.assinatura?`<h3>Assinatura</h3><img src="${a.assinatura}" style="max-width:100%;border:1px solid var(--line);border-radius:10px">`:''}</div>`;
+    return;
+  }
+  if(a.expiraEm&&a.expiraEm<Date.now()){ $('#app').innerHTML=`<div class="card center"><div class="ic bad">${svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')}</div><h2>Link expirado</h2><p class="muted">Este link valia por 24 horas. Peça um novo para o vendedor.</p></div>`; return; }
+  $('#app').innerHTML=`<div class="hero"><small>Assinatura do contrato nº ${esc(a.numero)}</small><b style="font-size:22px">Olá, ${esc(primeiroNome(a.clienteNome))}!</b><span style="color:#C9D4EE">Leia o contrato com calma antes de assinar. ${esc(a.empresa||'')} · ${esc(a.lojaNome||'')}</span></div>
+    <div class="card"><h2>Contrato</h2><div class="contrato">${a.contrato}</div>
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="sgAceite"> <span>Li o contrato e <b>concordo com a cláusula 5</b>: o aparelho pode ser bloqueado se eu atrasar as parcelas.</span></label>
+      <label class="check"><input type="checkbox" id="sgLgpd"> <span>Autorizo o tratamento dos meus dados pessoais e da biometria (cláusula 6).</span></label>
+      <label>Digite seu nome completo<input id="sgNome" autocomplete="name"></label>
+      <h3>Assine com o dedo</h3><canvas id="sig" class="sig"></canvas>
+      <div class="row" style="justify-content:space-between;margin-top:8px"><button class="btn sm" id="sgLimpar">Limpar</button><span class="small muted">Assine dentro do quadro</span></div>
+      <div class="erro" id="sgMsg"></div>
+      <button class="btn pri full" id="sgBtn">Assinar contrato</button></div>`;
+  const cv=$('#sig'); setupSig(cv);
+  $('#sgLimpar').onclick=()=>setupSig(cv);
+  $('#sgBtn').onclick=async()=>{
+    const m=$('#sgMsg'); m.textContent='';
+    if(!$('#sgAceite').checked||!$('#sgLgpd').checked) return m.textContent='Marque as duas autorizações.';
+    if(normNome($('#sgNome').value)!==normNome(a.clienteNome)) return m.textContent='Digite seu nome completo igual ao do documento.';
+    if(cv._vazio) return m.textContent='Falta a sua assinatura.';
+    $('#sgBtn').disabled=true;
+    try{
+      await DB.set('assinaturas',tk,{status:'ASSINADO',assinatura:reduzir(cv),assinadoEm:Date.now(),aceites:{bloqueio:true,lgpd:true},dispositivo:navigator.userAgent.slice(0,180),nomeDigitado:$('#sgNome').value.trim()});
+      // carimbo do servidor: grava data/hora do servidor, IP e hash do contrato (prova da assinatura)
+      let carimbo=null; const serv=String(a.servidor||'').replace(/\/$/,'');
+      if(serv.startsWith('https://')&&!DEMO){ try{ const r=await fetch(serv+'/api/assinatura',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acao:'carimbo',tk})}); if(r.ok) carimbo=await r.json(); }catch(e){} }
+      $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Contrato assinado!</h2><p>Pronto, ${esc(primeiroNome(a.clienteNome))}. Pode avisar o vendedor: a assinatura já apareceu na tela dele.</p>${carimbo?.codigo?`<p class="small">Código de verificação da assinatura: <b style="font-family:monospace">${esc(carimbo.codigo)}</b><br><span class="muted">Registrado em ${new Date(carimbo.servidorEm).toLocaleString('pt-BR')}</span></p>`:''}
+        <p class="small muted">Depois que o aparelho for entregue, você acompanha as faturas aqui mesmo, em “Minhas faturas”.</p><a class="btn full" href="${location.pathname}${DEMO?'?demo':''}">Ir para Minhas faturas</a></div>`;
+    }catch(e){ console.error(e); m.textContent='Não foi possível assinar. O link pode ter expirado: peça um novo ao vendedor.'; $('#sgBtn').disabled=false; }
+  };
+}
+function setupSig(cv){
+  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1; cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0B1E35';
+  let on=false; cv._vazio=true; const pt=e=>{ const b=cv.getBoundingClientRect(); return [e.clientX-b.left,e.clientY-b.top]; };
+  cv.onpointerdown=e=>{ on=true; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pt(e)); };
+  cv.onpointermove=e=>{ if(!on) return; ctx.lineTo(...pt(e)); ctx.stroke(); cv._vazio=false; };
+  cv.onpointerup=cv.onpointercancel=()=>{ on=false; };
+}
+function reduzir(cv){ const w=600, h=Math.round(cv.height*w/cv.width); const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(cv,0,0,w,h); return c.toDataURL('image/jpeg',0.7); }
+
+
+/* ---------- español (clientes de Paraguay y Argentina) ---------- */
+const ES=[
+ ['Pague até completar','Pague antes de completar'],['Faltam ','Faltan '],[' dia(s) para limitar as funções',' día(s) para limitar las funciones'],[' dia(s) para o bloqueio total',' día(s) para el bloqueo total'],
+ ['(redes sociais e vídeos) e ','(redes sociales y videos) y '],['Pague agora para evitar.','Pague ahora para evitarlo.'],['Pague agora para liberar.','Pague ahora para liberar.'],
+ ['Redes sociais e vídeos estão bloqueados.','Redes sociales y videos están bloqueados.'],
+ ['Portal do cliente','Portal del cliente'],['Minhas faturas','Mis cuotas'],['Veja suas parcelas, pague com PIX e acompanhe seu contrato.','Vea sus cuotas, pague con PIX y siga su contrato.'],
+ ['Data de nascimento','Fecha de nacimiento'],['4 últimos dígitos do celular cadastrado na compra','Últimos 4 dígitos del celular registrado en la compra'],['Entrar','Ingresar'],
+ ['Seus dados não são mostrados para ninguém. Problemas para entrar? Fale com a loja onde você comprou.','Sus datos no se muestran a nadie. ¿Problemas para ingresar? Hable con la tienda donde compró.'],
+ ['Ainda não é cliente?','¿Todavía no es cliente?'],['Faça sua pré-análise de crédito pelo celular, sem compromisso.','Haga su preanálisis de crédito por el celular, sin compromiso.'],['Quero comprar um celular parcelado','Quiero comprar un celular en cuotas'],
+ ['Não encontramos contrato com esses dados. Confira e tente de novo.','No encontramos un contrato con esos datos. Verifique e intente de nuevo.'],['CPF inválido.','CPF inválido.'],
+ ['Olá, ','¡Hola, '],['Seu contrato com a ','Su contrato con '],[' contratos con ',' contratos con '],['Contrato nº','Contrato n.º'],['Faturas em dia','Cuotas al día'],['fatura(s) em atraso','cuota(s) atrasada(s)'],
+ ['Em atraso — aparelho bloqueado','Atrasado — equipo bloqueado'],['Em atraso — funções limitadas','Atrasado — funciones limitadas'],['Contrato quitado','Contrato pagado'],['Contrato encerrado','Contrato cerrado'],
+ ['Roubo/perda comunicado — aparelho travado','Robo/pérdida denunciado — equipo bloqueado'],
+ ['Próxima: parcela ','Próxima: cuota '],[' — vence ',' — vence '],['Pagando antes do vencimento: ','Pagando antes del vencimiento: '],['% de desconto','% de descuento'],
+ ['atrasada há ','atrasada hace '],['Com multa e juros:','Con multa e intereses:'],[' vence hoje',' vence hoy'],['vence hoje','vence hoy'],['Pagar parcela ','Pagar cuota '],[' com PIX',' con PIX'],
+ ['Faturas','Cuotas'],['Parcela ','Cuota '],['Paga','Pagada'],['com desconto','con descuento'],['dia(s) em atraso','día(s) de atraso'],['Pagar','Pagar'],['Recibo','Recibo'],['vence ','vence '],['já pago ','ya pagado '],
+ ['Quitar o contrato hoje: ','Cancelar el contrato hoy: '],['Você economiza ','Usted ahorra '],[' nas parcelas que ainda não venceram.',' en las cuotas que aún no vencieron.'],['Quitar com PIX','Cancelar con PIX'],
+ ['Indique um amigo e ganhe desconto!','¡Recomiende a un amigo y gane descuento!'],['Quando um amigo seu comprar com o código ','Cuando un amigo compre con el código '],[', você ganha desconto na sua última parcela.',', usted gana descuento en su última cuota.'],['Enviar para um amigo','Enviar a un amigo'],
+ ['Roubo, furto ou perda','Robo, hurto o pérdida'],['Meu aparelho deu defeito','Mi equipo tiene un defecto'],['Mudar dia do vencimento','Cambiar día de vencimiento'],['Meus dados (LGPD)','Mis datos (LGPD)'],
+ ['Falar com a ','Hablar con '],[' no WhatsApp',' por WhatsApp'],['Baixar termo de quitação','Descargar constancia de pago total'],['Meus pedidos','Mis pedidos'],
+ [' pontos',' puntos'],['Cada parcela paga em dia vale ','Cada cuota pagada a tiempo vale '],['. Troque na loja por desconto em acessórios ou no próximo celular.','. Cámbielos en la tienda por descuento en accesorios o en el próximo celular.'],
+ ['Como foi o seu atendimento na compra?','¿Cómo fue la atención en su compra?'],['0 = muito ruim · 10 = excelente','0 = muy malo · 10 = excelente'],
+ ['Pagar com PIX','Pagar con PIX'],['Copiar código PIX','Copiar código PIX'],['Abra o app do seu banco, escolha PIX copia e cola e cole o código. Depois envie o comprovante para a loja.','Abra la app de su banco, elija PIX copia y pega y pegue el código. Luego envíe el comprobante a la tienda.'],
+ ['O pagamento é confirmado sozinho: em poucos minutos a fatura aparece como paga e o aparelho é liberado.','El pago se confirma solo: en pocos minutos la cuota aparece pagada y el equipo se libera.'],
+ ['Comunicar roubo, furto ou perda','Denunciar robo, hurto o pérdida'],['O que aconteceu?','¿Qué pasó?'],['Quando?','¿Cuándo?'],['Onde? (bairro, cidade)','¿Dónde? (barrio, ciudad)'],['Número do boletim de ocorrência (se já tiver)','Número de denuncia policial (si ya la tiene)'],
+ ['Conte o que aconteceu (opcional)','Cuente lo que pasó (opcional)'],['Comunicar e travar o aparelho','Denunciar y bloquear el equipo'],['Roubo','Robo'],['Furto','Hurto'],['Perda','Pérdida'],
+ ['Assistência técnica','Servicio técnico'],['O que está acontecendo com o aparelho?','¿Qué le pasa al equipo?'],['Enviar pedido','Enviar pedido'],['Pedido enviado','Pedido enviado'],
+ ['Novo dia de vencimento','Nuevo día de vencimiento'],['Pedir a mudança','Solicitar el cambio'],['Mudar o dia do vencimento','Cambiar el día de vencimiento'],
+ ['Assistente NexumCell','Asistente NexumCell'],['Escreva sua dúvida','Escriba su duda'],['Enviar','Enviar'],['Dúvidas','Dudas'],['Quanto eu devo?','¿Cuánto debo?'],['Quando vence?','¿Cuándo vence?'],['Como quito?','¿Cómo cancelo el total?'],['Meu celular travou','Mi celular se bloqueó'],['Falar com atendente','Hablar con una persona'],
+ ['Olá! Posso ajudar com suas parcelas, PIX, quitação, desbloqueio e pedidos. O que você precisa?','¡Hola! Puedo ayudar con sus cuotas, PIX, pago total, desbloqueo y pedidos. ¿Qué necesita?'],
+ ['Sair','Salir'],['Boleto ou cartão','Boleto o tarjeta'],['Débito automático no PIX','Débito automático por PIX'],['Ativar débito automático','Activar débito automático'],['Nunca mais atrase: você paga a próxima parcela agora (com desconto) e autoriza o débito das próximas no app do seu banco. Dá para cancelar no próprio banco.','No se atrase más: paga la próxima cuota ahora (con descuento) y autoriza el débito de las siguientes en la app de su banco. Puede cancelarlo en su banco.'],['Carregando…','Cargando…'],['Obrigado!','¡Gracias!'],
+ ['Celular parcelado sem cartão','Celular en cuotas sin tarjeta'],['Faça a pré-análise em 2 minutos. Entrada a partir de ','Haga el preanálisis en 2 minutos. Entrada desde '],['Nome completo','Nombre completo'],['Nascimento','Nacimiento'],
+ ['Renda mensal (R$)','Ingreso mensual (R$)'],['Profissão','Profesión'],['Cidade','Ciudad'],['Qual celular você quer?','¿Qué celular quiere?'],['Ainda não sei','Todavía no sé'],['Quanto você tem de entrada (R$)?','¿Cuánto tiene de entrada (R$)?'],
+ ['Loja mais perto','Tienda más cercana'],['Enviar pré-análise','Enviar preanálisis'],['Exemplo: entrada de ','Ejemplo: entrada de '],['. Os valores finais são confirmados na loja.','. Los valores finales se confirman en la tienda.'],
+ ['Pré-análise enviada!','¡Preanálisis enviado!'],['Pré-análise de crédito','Preanálisis de crédito'],['Pré-aprovado!','¡Preaprobado!'],
+ ['Autorizo a loja a localizar o aparelho enquanto ele estiver com comunicação de roubo ativa, para ajudar a recuperá-lo (pode informar à polícia).','Autorizo a la tienda a localizar el equipo mientras tenga una denuncia de robo activa, para ayudar a recuperarlo (puede informar a la policía).'],
+ ['Confirmo que o aparelho não está comigo e quero que ele seja travado.','Confirmo que el equipo no está conmigo y quiero que sea bloqueado.'],
+ ['Autorizo a loja a usar estes dados para análise de crédito e contato pelo WhatsApp (LGPD).','Autorizo a la tienda a usar estos datos para análisis de crédito y contacto por WhatsApp (LGPD).'],
+ ['Assine com o dedo','Firme con el dedo'],['Assinar contrato','Firmar contrato'],['Digite seu nome completo','Escriba su nombre completo'],['Limpar','Borrar'],['Contrato assinado!','¡Contrato firmado!'],['Contrato assinado','Contrato firmado'],
+];
+let LANG=(()=>{ try{ return localStorage.getItem('nxc_lang')||((navigator.language||'').toLowerCase().startsWith('es')?'es':'pt'); }catch(e){ return 'pt'; } })();
+const ES_ORD=ES.slice().sort((a,b)=>b[0].length-a[0].length);
+const ES_RX=ES_ORD.map(([a,b])=>{ if(a.trim().length>=9) return [a,b,null]; const L='A-Za-zÀ-ú', esc=a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return [a,b,new RegExp((/[A-Za-zÀ-ú]/.test(a[0])?'(^|[^'+L+'])':'()')+esc+(/[A-Za-zÀ-ú]/.test(a[a.length-1])?'(?=$|[^'+L+'])':''),'g')]; });
+function trEs(t){ if(!t||!/[A-Za-zÀ-ú]/.test(t)) return t; let r=t; for(const [a,b,rx] of ES_RX){ if(!r.includes(a)) continue; r=rx?r.replace(rx,(m,pre)=>pre+b):r.split(a).join(b); } return r; }
+function traduzirNo(n){
+  if(LANG!=='es') return;
+  const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT,{acceptNode:x=>x.parentNode&&!['SCRIPT','STYLE','TEXTAREA'].includes(x.parentNode.nodeName)&&!x.parentNode.closest('.contrato')?1:2});
+  let x; while((x=w.nextNode())){ const t=trEs(x.nodeValue); if(t!==x.nodeValue) x.nodeValue=t; }
+  (n.querySelectorAll?n.querySelectorAll('[placeholder]'):[]).forEach(e=>{ const t=trEs(e.placeholder); if(t!==e.placeholder) e.placeholder=t; });
+}
+new MutationObserver(ms=>{ if(LANG!=='es') return; ms.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1) traduzirNo(n); else if(n.nodeType===3&&n.parentNode) traduzirNo(n.parentNode); })); }).observe(document.body,{childList:true,subtree:true});
+$('#lang').textContent=LANG==='es'?'PT':'ES'; document.documentElement.lang=LANG==='es'?'es':'pt-BR';
+$('#lang').onclick=()=>{ LANG=LANG==='es'?'pt':'es'; try{ localStorage.setItem('nxc_lang',LANG); }catch(e){} location.reload(); };
+
+/* ---------- eventos e início ---------- */
+document.addEventListener('click',e=>{
+  const p=e.target.closest('[data-pagar]'); if(p){ const n=+p.dataset.n; pagar(p.dataset.pagar,n,+p.dataset.v,n>0?`Parcela ${n} · contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`:`Quitação do contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`); return; }
+  const r=e.target.closest('[data-roubo]'); if(r){ formRoubo(r.dataset.roubo); return; }
+  const pd=e.target.closest('[data-pedido]'); if(pd){ formPedido(pd.dataset.pedido,pd.dataset.tipo); return; }
+  const rc=e.target.closest('[data-recibo]'); if(rc){ recibo(rc.dataset.recibo,+rc.dataset.n); return; }
+  const pa=e.target.closest('[data-pixauto]'); if(pa){ ativarPixAutomatico(pa.dataset.pixauto); return; }
+  const np=e.target.closest('[data-nps]'); if(np){ formNps(np.dataset.nps,+np.dataset.n); return; }
+  const tm=e.target.closest('[data-termo]'); if(tm){ termo(tm.dataset.termo); return; }
+  const q=e.target.closest('[data-q]'); if(q){ perguntar(q.dataset.q); return; }
+  if(e.target.closest('#chatBtn')) abrirChat();
+});
+$('#sair').onclick=()=>{ $('#chatBtn')?.remove(); sessionStorage.removeItem('nxc_cli'); S.tokens=[]; telaLogin(); };
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+(async()=>{
+  try{ if(FB_ON) await iniciarFirebase(); }
+  catch(e){ console.error(e); $('#app').innerHTML='<div class="card center"><h2>Sem conexão</h2><p class="muted">Verifique a internet e recarregue a página.</p></div>'; return; }
+  if(!FB_ON&&!DEMO){ $('#app').innerHTML='<div class="card center"><h2>Portal em configuração</h2><p class="muted">Volte mais tarde.</p></div>'; return; }
+  const qs=new URLSearchParams(location.search), tk=qs.get('assinar');
+  if(tk) return telaAssinar(tk);
+  if(qs.has('pre')) return telaPre(qs.get('pre'));
+  try{ S.tokens=JSON.parse(sessionStorage.getItem('nxc_cli'))||[]; }catch(e){ S.tokens=[]; }
+  if(S.tokens.length) await telaContratos(); else telaLogin();
+  traduzirNo(document.body);
+})();
+</script>
+</body>
+</html>
