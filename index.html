@@ -390,7 +390,7 @@ async function telaPre(id){
       <div class="erro" id="pMsg"></div><button class="btn gold full" id="pBtn">Enviar pré-análise</button>
       <p class="small muted">A pré-análise não é a aprovação final: na loja confirmamos seu documento e fazemos a biometria.</p></form>`;
   $('#pCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
-  const sim=()=>{ const a=vit.aparelhos[$('#pAp').value]; if(!a){ $('#pSim').textContent=''; return; } const ent=r2(a.preco*(vit.entradaPct||30)/100), fin=a.preco-ent, n=Math.max(...String(vit.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), p=fin*(1+(a.juros??vit.jurosPadrao??25)/100)/n;
+  const sim=()=>{ const a=vit.aparelhos[$('#pAp').value]; if(!a){ $('#pSim').textContent=''; return; } const ent=r2(a.preco*(vit.entradaPct||30)/100), fin=a.preco-ent, n=Math.max(...String(vit.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), p=(a.preco*(1+(a.juros??vit.jurosPadrao??25)/100)-ent)/n;
     $('#pSim').innerHTML=`Exemplo: entrada de <b>${brl(ent)}</b> + <b>${n}x de ${brl(p)}</b>. Os valores finais são confirmados na loja.`; if(!$('#pEnt').value) $('#pEnt').value=ent; };
   $('#pAp').addEventListener('change',sim);
   $('#fPre').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('#pMsg'); m.textContent='';
