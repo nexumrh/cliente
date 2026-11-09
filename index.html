@@ -236,7 +236,7 @@ function cardContrato(ap){
     ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?(()=>{ const et=etapas(ap); return hp.dias<et.parcial?`<div class="aviso warn"><b>Faltam ${et.parcial-hp.dias} dia(s) para limitar as funções</b> (redes sociais e vídeos) e ${et.total-hp.dias} dia(s) para o bloqueio total. Pague agora para evitar.</div>`:hp.dias<et.total?`<div class="aviso bad">Redes sociais e vídeos estão bloqueados. <b>Faltam ${et.total-hp.dias} dia(s) para o bloqueio total.</b> Pague agora para liberar.</div>`:''; })():''}
     ${ap.vip&&!encerrado?`<div class="aviso ok"><b>${ap.vip==='Ouro'?'🥇':'🥈'} Cliente VIP ${esc(ap.vip)}</b><br><span class="small">Você é um dos nossos melhores pagadores. Na próxima compra, seus juros são menores.</span></div>`:''}
     ${!encerrado&&ap.criadoEm&&Date.now()-ap.criadoEm<=(+ap.trocaDias||7)*86400000?`<div class="aviso" style="background:#EEF4FF;border-color:#C9D6F2"><b>Garantia de troca</b><br><span class="small">Até ${fmtD(new Date(ap.criadoEm+(+ap.trocaDias||7)*86400000).toISOString().slice(0,10))} você pode trocar o aparelho com defeito ou devolver, na loja, com caixa e acessórios.</span></div>`:''}
-    ${ap.preAprovado&&!roubo?`<div class="aviso ok"><b>🎉 Você tem crédito pré-aprovado para trocar de celular!</b><br>Por ser um ótimo pagador, passe na ${esc(ap.preAprovado.loja||ap.lojaNome||'loja')} para ver os modelos.</div>`:''}
+    ${ap.preAprovado&&!roubo?`<div class="aviso ok"><b>🎉 Você tem crédito pré-aprovado para trocar de celular${ap.preAprovado.valor?` até ${brl(ap.preAprovado.valor)}`:''}!</b><br>Por ser um ótimo pagador${ap.preAprovado.ate?` (válido até ${fmtD(ap.preAprovado.ate)})`:''}, passe na ${esc(ap.preAprovado.loja||ap.lojaNome||'loja')} para ver os modelos.</div>`:''}
     ${encerrado?`<div class="aviso ok">${ap.status==='CANCELADO'?'Este contrato foi encerrado.':'Parabéns! Contrato quitado e trava removida do aparelho.'}</div>`:''}
     ${prox&&!encerrado?`<div class="aviso ${hp.tipo==='atraso'?'bad':'warn'}" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
         <div>${hp.tipo==='atraso'?`<b>Parcela ${prox.n} atrasada há ${hp.dias} dia(s)</b><br>Com multa e juros:`:hp.tipo==='hoje'?`<b>Parcela ${prox.n} vence hoje</b>`:`<b>Próxima: parcela ${prox.n} — vence ${fmtD(prox.venc)}</b><br>Pagando antes do vencimento: ${Number(ap.descontoPct)||0}% de desconto`}</div>
@@ -393,6 +393,11 @@ async function telaPre(id){
   const sim=()=>{ const a=vit.aparelhos[$('#pAp').value]; if(!a){ $('#pSim').textContent=''; return; } const ent=r2(a.preco*(vit.entradaPct||30)/100), fin=a.preco-ent, n=Math.max(...String(vit.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), p=(a.preco*(1+(a.juros??vit.jurosPadrao??25)/100)-ent)/n;
     $('#pSim').innerHTML=`Exemplo: entrada de <b>${brl(ent)}</b> + <b>${n}x de ${brl(p)}</b>. Os valores finais são confirmados na loja.`; if(!$('#pEnt').value) $('#pEnt').value=ent; };
   $('#pAp').addEventListener('change',sim);
+  // link de simulação enviado pelo vendedor: já vem com o aparelho, a entrada e a loja
+  const Q=new URLSearchParams(location.search), qAp=Q.get('a'), qE=+Q.get('e')||0, qL=Q.get('l'), qVn=Q.get('vn');
+  if(qAp){ const i=(vit.aparelhos||[]).findIndex(a=>`${a.marca} ${a.modelo} ${a.capacidade}`===qAp); if(i>=0){ $('#pAp').value=String(i); sim(); } }
+  if(qE) $('#pEnt').value=qE; if(qL&&(vit.lojas||[]).some(l=>l.id===qL)) $('#pLoja').value=qL;
+  if(qVn) $('#fPre').insertAdjacentHTML('afterbegin',`<div class="aviso ok" style="margin-top:0">📲 Simulação enviada por <b>${esc(qVn)}</b>. Preencha seus dados para ver a resposta na hora.</div>`);
   $('#fPre').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('#pMsg'); m.textContent='';
     const cpf=onlyDig($('#pCpf').value), tel=onlyDig($('#pTel').value), a=vit.aparelhos[$('#pAp').value], loja=(vit.lojas||[]).find(l=>l.id===$('#pLoja').value)||{};
     if(!cpfOk(cpf)) return m.textContent='CPF inválido.'; if(tel.length<10) return m.textContent='WhatsApp com DDD.';
@@ -400,7 +405,7 @@ async function telaPre(id){
     if(!$('#pOk').checked) return m.textContent='Marque a autorização para continuar.';
     $('#pBtn').disabled=true;
     try{ const dados={nome:$('#pNome').value.trim().slice(0,120),cpf,nasc:$('#pNasc').value,telefone:tel,cidade:$('#pCid').value.trim(),renda:+$('#pRenda').value||0,profissao:$('#pProf').value.trim(),
-        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now()};
+        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now(),...(Q.get('v')?{vendedorUid:Q.get('v'),vendedorNome:qVn||''}:{})};
       const id=S.preServ?(await apiPre({acao:'enviar',...dados})).id:await DB.add('preanalises',dados);
       history.replaceState(null,'',`?pre=${id}${DEMO?'&demo':''}`);
       if(S.preServ){ toast('Pré-análise enviada!','ok'); return telaPre(id); }   // resposta automática já aparece na tela
