@@ -236,6 +236,10 @@ function cardContrato(ap){
     ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?(()=>{ const et=etapas(ap); return hp.dias<et.parcial?`<div class="aviso warn"><b>Faltam ${et.parcial-hp.dias} dia(s) para limitar as funções</b> (redes sociais e vídeos) e ${et.total-hp.dias} dia(s) para o bloqueio total. Pague agora para evitar.</div>`:hp.dias<et.total?`<div class="aviso bad">Redes sociais e vídeos estão bloqueados. <b>Faltam ${et.total-hp.dias} dia(s) para o bloqueio total.</b> Pague agora para liberar.</div>`:''; })():''}
     ${ap.vip&&!encerrado?`<div class="aviso ok"><b>${ap.vip==='Ouro'?'🥇':'🥈'} Cliente VIP ${esc(ap.vip)}</b><br><span class="small">Você é um dos nossos melhores pagadores. Na próxima compra, seus juros são menores.</span></div>`:''}
     ${!encerrado&&ap.criadoEm&&Date.now()-ap.criadoEm<=(+ap.trocaDias||7)*86400000?`<div class="aviso" style="background:#EEF4FF;border-color:#C9D6F2"><b>Garantia de troca</b><br><span class="small">Até ${fmtD(new Date(ap.criadoEm+(+ap.trocaDias||7)*86400000).toISOString().slice(0,10))} você pode trocar o aparelho com defeito ou devolver, na loja, com caixa e acessórios.</span></div>`:''}
+    ${ap.score&&!roubo?(()=>{ const sc=ap.score, cor={Bronze:'#B87333',Prata:'#8A94A6',Ouro:'#C9A227',Diamante:'#3B82F6'}[sc.faixa]||'#0B5B3F', pc=Math.max(0,Math.min(100,(sc.valor||0)/10));
+      return `<div class="card" style="border-left:5px solid ${cor}"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><small class="muted">Seu score NexumCell</small><b style="display:block;font-size:28px;color:${cor}">${sc.valor} <span style="font-size:15px">· ${esc(sc.faixa)}</span></b></div><div style="font-size:34px">${{Bronze:'🥉',Prata:'🥈',Ouro:'🥇',Diamante:'💎'}[sc.faixa]||'⭐'}</div></div>
+        <div style="height:8px;background:#EEF1F6;border-radius:8px;overflow:hidden;margin:8px 0"><i style="display:block;height:100%;width:${pc}%;background:${cor}"></i></div>
+        <span class="small muted">${sc.proxima?`Faltam <b>${sc.proxima.falta}</b> pontos para ${esc(sc.proxima.faixa)}. Pague em dia (ou antes) para subir e ganhar mais limite na próxima compra.`:'Você está na faixa mais alta. Parabéns!'}</span></div>`; })():''}
     ${ap.preAprovado&&!roubo?`<div class="aviso ok"><b>🎉 Você tem crédito pré-aprovado para trocar de celular${ap.preAprovado.valor?` até ${brl(ap.preAprovado.valor)}`:''}!</b><br>Por ser um ótimo pagador${ap.preAprovado.ate?` (válido até ${fmtD(ap.preAprovado.ate)})`:''}, passe na ${esc(ap.preAprovado.loja||ap.lojaNome||'loja')} para ver os modelos.</div>`:''}
     ${encerrado?`<div class="aviso ok">${ap.status==='CANCELADO'?'Este contrato foi encerrado.':'Parabéns! Contrato quitado e trava removida do aparelho.'}</div>`:''}
     ${prox&&!encerrado?`<div class="aviso ${hp.tipo==='atraso'?'bad':'warn'}" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -375,6 +379,8 @@ async function telaPre(id){
     $('#fAg')?.addEventListener('submit',async e=>{ e.preventDefault(); try{ if(S.preServ) await apiPre({acao:'agendar',id,data:$('#agData').value,hora:$('#agHora').value}); else await DB.set('preanalises',id,{agendamento:{data:$('#agData').value,hora:$('#agHora').value,em:Date.now()}}); toast('Retirada agendada!','ok'); telaPre(id); }catch(err){ toast(err.doServidor?err.message:'Não foi possível agendar. Fale com a loja.','err'); } });
     return; }
   const vit=vit0||{aparelhos:[],lojas:[],entradaPct:30};
+  const semis=(vit.seminovos||[]).map(x=>({marca:x.marca,modelo:x.modelo,capacidade:`${x.capacidade||''} (seminovo${x.estado?' — '+x.estado:''})`.trim(),preco:x.preco,juros:vit.jurosPadrao,seminovo:true,lojaId:x.lojaId,lojaNome:x.lojaNome}));
+  vit.aparelhos=[...(vit.aparelhos||[]),...semis];
   $('#app').innerHTML=`<div class="hero"><small>${esc(vit.empresa||'NexumCell')}</small><b style="font-size:22px">Celular parcelado sem cartão</b><span style="color:#C9D4EE">Faça a pré-análise em 2 minutos. Entrada a partir de ${vit.entradaPct||30}%.</span></div>
     <form class="card" id="fPre">
       <label>Nome completo<input id="pNome" required maxlength="120" autocomplete="name"></label>
@@ -382,13 +388,17 @@ async function telaPre(id){
       <label>WhatsApp<input id="pTel" inputmode="tel" required placeholder="(45) 99999-9999"></label>
       <div class="row" style="gap:10px"><label style="flex:1">Renda mensal (R$)<input id="pRenda" type="number" min="0" step="0.01" required></label><label style="flex:1">Profissão<input id="pProf" maxlength="60" required></label></div>
       <label>Cidade<input id="pCid" maxlength="60" value="Foz do Iguaçu"></label>
-      <label>Qual celular você quer?<select id="pAp"><option value="">Ainda não sei</option>${(vit.aparelhos||[]).map((a,i)=>`<option value="${i}">${esc(a.marca+' '+a.modelo+' '+a.capacidade)} — ${brl(a.preco)}</option>`).join('')}</select></label>
+      <label>Qual celular você quer?<select id="pAp"><option value="">Ainda não sei</option>${(vit.aparelhos||[]).map((a,i)=>a.seminovo?'':`<option value="${i}">${esc(a.marca+' '+a.modelo+' '+a.capacidade)} — ${brl(a.preco)}</option>`).join('')}${semis.length?`<optgroup label="Seminovos">${vit.aparelhos.map((a,i)=>a.seminovo?`<option value="${i}">${esc(a.marca+' '+a.modelo+' '+a.capacidade)} — ${brl(a.preco)}</option>`:'').join('')}</optgroup>`:''}</select></label>
       <div id="pSim" class="small muted"></div>
       <label>Quanto você tem de entrada (R$)?<input id="pEnt" type="number" min="0" step="0.01"></label>
       <label>Loja mais perto<select id="pLoja">${(vit.lojas||[]).map(l=>`<option value="${l.id}">${esc(l.nome)}${l.cidade?' — '+esc(l.cidade):''}</option>`).join('')}</select></label>
       <label class="check"><input type="checkbox" id="pOk"> <span>Autorizo a loja a usar estes dados para análise de crédito e contato pelo WhatsApp (LGPD).</span></label>
       <div class="erro" id="pMsg"></div><button class="btn gold full" id="pBtn">Enviar pré-análise</button>
       <p class="small muted">A pré-análise não é a aprovação final: na loja confirmamos seu documento e fazemos a biometria.</p></form>`;
+  if(semis.length){ const n0=(vit.aparelhos.length-semis.length), nMax=Math.max(...String(vit.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), pct=(vit.entradaPct||30)/100;
+    $('#fPre').insertAdjacentHTML('beforebegin',`<div class="card"><b>♻️ Seminovos revisados</b><p class="small muted" style="margin:4px 0 8px">Aparelhos usados, conferidos pela loja, também parcelados no crediário.</p>${semis.map((x,i)=>{ const e=Math.round(x.preco*pct*100)/100, p=Math.round((x.preco-e)*(1+(x.juros||0)/100)/nMax*100)/100;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)"><div><b>${esc(x.marca+' '+x.modelo)}</b><br><span class="small muted">${esc(x.capacidade)}${x.lojaNome?' · '+esc(x.lojaNome):''}</span></div><div style="text-align:right"><b>${brl(x.preco)}</b><br><span class="small muted">${brl(e)} + ${nMax}x ${brl(p)}</span><br><button type="button" class="btn sm" data-semi="${n0+i}">Quero este</button></div></div>`; }).join('')}</div>`);
+    document.querySelectorAll('[data-semi]').forEach(b=>b.addEventListener('click',()=>{ const x=vit.aparelhos[+b.dataset.semi]; $('#pAp').value=b.dataset.semi; if(x.lojaId&&(vit.lojas||[]).some(l=>l.id===x.lojaId)) $('#pLoja').value=x.lojaId; $('#pAp').dispatchEvent(new Event('change')); $('#fPre').scrollIntoView({behavior:'smooth'}); })); }
   $('#pCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
   const sim=()=>{ const a=vit.aparelhos[$('#pAp').value]; if(!a){ $('#pSim').textContent=''; return; } const ent=r2(a.preco*(vit.entradaPct||30)/100), fin=a.preco-ent, n=Math.max(...String(vit.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), p=(a.preco*(1+(a.juros??vit.jurosPadrao??25)/100)-ent)/n;
     $('#pSim').innerHTML=`Exemplo: entrada de <b>${brl(ent)}</b> + <b>${n}x de ${brl(p)}</b>. Os valores finais são confirmados na loja.`; if(!$('#pEnt').value) $('#pEnt').value=ent; };
@@ -415,6 +425,60 @@ async function telaPre(id){
   });
 }
 
+
+/* ---------- Venda a distância: documento, selfie e dados pelo celular do cliente ---------- */
+function fotoReduzida(file,max=1100,q=0.7){ return new Promise((ok,er)=>{ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ let w=im.width,h=im.height; const k=Math.min(1,max/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+  const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(im,0,0,w,h); let d=c.toDataURL('image/jpeg',q); if(d.length>300000) d=c.toDataURL('image/jpeg',0.5); ok(d); }; im.onerror=()=>er(new Error('Imagem inválida')); im.src=fr.result; }; fr.onerror=er; fr.readAsDataURL(file); }); }
+async function apiRemota(dados){
+  const r=await fetch(S.preServ+'/api/remota',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw Object.assign(new Error(j.erro||'Erro '+r.status),{doServidor:true}); return j;
+}
+async function telaRemota(tk){
+  $('#sair').hidden=true;
+  const vit=await DB.get('publico','vitrine').catch(()=>null); S.preServ=DEMO?'':String(vit?.servidor||'').replace(/\/$/,'');
+  let info={numero:'—',loja:vit?.empresa||'',vendedor:''};
+  if(S.preServ){ try{ info=await apiRemota({acao:'ver',token:tk}); }catch(e){ $('#app').innerHTML=`<div class="card center"><h2>Link indisponível</h2><p class="muted">${esc(e.message)}</p></div>`; return; } }
+  if(info.enviado){ $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Documentos já enviados</h2><p class="muted">A ${esc(info.loja||'loja')} está analisando e vai chamar você no WhatsApp.</p></div>`; return; }
+  const F={};
+  const caixa=(k,t,dica,cam)=>`<div class="card" style="margin-top:10px"><b>${t}</b><p class="small muted" style="margin:4px 0 8px">${dica}</p><div id="prev_${k}"></div>
+    <label class="btn full" style="text-align:center;cursor:pointer">📷 ${cam?'Tirar selfie':'Tirar foto'}<input type="file" accept="image/*" ${cam?'capture="user"':'capture="environment"'} data-ft="${k}" hidden></label></div>`;
+  $('#app').innerHTML=`<div class="hero"><small>${esc(info.loja||'')}${info.vendedor?' · '+esc(info.vendedor):''}</small><b style="font-size:22px">Análise de crédito pelo celular</b><span style="color:#C9D4EE">Proposta nº ${esc(String(info.numero))} · leva uns 3 minutos</span></div>
+    <form id="fRem">
+    ${caixa('frente','1. Documento — frente','RG, CNH ou a nova identidade. Tire da mesa, com boa luz, sem reflexo e com o documento inteiro na foto.')}
+    ${caixa('verso','2. Documento — verso','Se for CNH, pode pular.')}
+    ${caixa('selfie','3. Selfie','Rosto inteiro, sem óculos escuros nem boné, em lugar claro.',true)}
+    <div class="card"><b>4. Seus dados</b>
+      <label>Nome completo<input id="rNome" required maxlength="120" autocomplete="name"></label>
+      <div class="row" style="gap:10px"><label style="flex:1">CPF<input id="rCpf" inputmode="numeric" required></label><label style="flex:1">Nascimento<input id="rNasc" type="date" required></label></div>
+      <div class="row" style="gap:10px"><label style="flex:1">RG<input id="rRg" maxlength="30"></label><label style="flex:1">Documento<select id="rDoc"><option>RG</option><option value="CIN">Nova identidade</option><option>CNH</option></select></label></div>
+      <label>Nome completo da mãe<input id="rMae" required maxlength="120"></label>
+      <div class="row" style="gap:10px"><label style="flex:1">WhatsApp<input id="rTel" inputmode="tel" required></label><label style="flex:1">Outro telefone (recado)<input id="rTel2" inputmode="tel"></label></div>
+      <label>E-mail<input id="rEmail" type="email" maxlength="120"></label>
+      <div class="row" style="gap:10px"><label style="flex:1">CEP<input id="rCep" inputmode="numeric" maxlength="9"></label><label style="flex:2">Endereço e número<input id="rEnd" required maxlength="160"></label></div>
+      <div class="row" style="gap:10px"><label style="flex:1">Bairro<input id="rBairro" required maxlength="80"></label><label style="flex:1">Cidade<input id="rCid" required maxlength="60"></label><label style="width:70px">UF<input id="rUf" maxlength="2" value="PR"></label></div>
+      <div class="row" style="gap:10px"><label style="flex:1">Renda mensal (R$)<input id="rRenda" type="number" min="0" step="0.01" required></label><label style="flex:1">Profissão<input id="rProf" required maxlength="80"></label></div>
+      <label class="check"><input type="checkbox" id="rOk"> <span>Declaro que os dados são verdadeiros e autorizo a ${esc(info.loja||'loja')} a usar meus dados, documento e selfie para análise de crédito e contato (LGPD).</span></label>
+      <div class="erro" id="rMsg"></div><button class="btn gold full" id="rBtn">Enviar para análise</button></div></form>`;
+  document.querySelectorAll('[data-ft]').forEach(inp=>inp.addEventListener('change',async()=>{ const k=inp.dataset.ft, f=inp.files[0]; if(!f) return;
+    try{ F[k]=await fotoReduzida(f); $('#prev_'+k).innerHTML=`<img src="${F[k]}" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-bottom:8px">`; }catch(e){ toast('Não foi possível ler a foto. Tente de novo.','err'); } }));
+  $('#rCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
+  $('#rCep').addEventListener('change',async e=>{ const c=onlyDig(e.target.value); if(c.length!==8) return; try{ const r=await (await fetch(`https://viacep.com.br/ws/${c}/json/`)).json(); if(r.erro) return; if(!$('#rEnd').value) $('#rEnd').value=r.logradouro?r.logradouro+', ':''; $('#rBairro').value=r.bairro||$('#rBairro').value; $('#rCid').value=r.localidade||$('#rCid').value; $('#rUf').value=r.uf||$('#rUf').value; }catch(_){} });
+  $('#fRem').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('#rMsg'); m.textContent='';
+    const dados={nome:$('#rNome').value.trim(),cpf:onlyDig($('#rCpf').value),nasc:$('#rNasc').value,rg:$('#rRg').value.trim(),docTipo:$('#rDoc').value,mae:$('#rMae').value.trim(),telefone:onlyDig($('#rTel').value),telefone2:onlyDig($('#rTel2').value),
+      email:$('#rEmail').value.trim(),cep:onlyDig($('#rCep').value),endereco:$('#rEnd').value.trim(),bairro:$('#rBairro').value.trim(),cidade:$('#rCid').value.trim(),uf:$('#rUf').value.trim(),renda:+$('#rRenda').value||0,profissao:$('#rProf').value.trim()};
+    if(!F.frente) return m.textContent='Tire a foto da frente do documento.';
+    if(dados.docTipo!=='CNH'&&!F.verso) return m.textContent='Tire a foto do verso do documento.';
+    if(!F.selfie) return m.textContent='Tire a selfie.';
+    if(!cpfOk(dados.cpf)) return m.textContent='CPF inválido.';
+    const idade=dados.nasc?Math.floor((Date.now()-new Date(dados.nasc))/31557600000):0; if(idade<18) return m.textContent='É preciso ter 18 anos ou mais.';
+    if(dados.telefone.length<10) return m.textContent='WhatsApp com DDD.';
+    if(!$('#rOk').checked) return m.textContent='Marque a autorização para continuar.';
+    $('#rBtn').disabled=true; $('#rBtn').textContent='Enviando…';
+    try{ if(S.preServ) await apiRemota({acao:'enviar',token:tk,dados,frente:F.frente,verso:F.verso||'',selfie:F.selfie,aceite:true});
+      $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Enviado para análise!</h2><p>A ${esc(info.loja||'loja')} recebeu seus documentos. A resposta sai em poucos minutos e o vendedor chama você no WhatsApp.</p><p class="small muted">Proposta nº ${esc(String(info.numero))}${DEMO?' · demonstração (nada foi enviado)':''}</p></div>`;
+    }catch(err){ m.textContent=err.doServidor?err.message:'Não foi possível enviar agora. Verifique a internet e tente de novo.'; $('#rBtn').disabled=false; $('#rBtn').textContent='Enviar para análise'; }
+  });
+}
 /* ---------- PIX Automático (Asaas) ---------- */
 async function ativarPixAutomatico(tk){
   const ap=S.aps[tk], serv=String(ap.servidorPix||'').trim().replace(/\/$/,'');
@@ -599,6 +663,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   const qs=new URLSearchParams(location.search), tk=qs.get('assinar');
   if(tk) return telaAssinar(tk);
   if(qs.has('pre')) return telaPre(qs.get('pre'));
+  if(qs.get('remoto')) return telaRemota(qs.get('remoto'));
   try{ S.tokens=JSON.parse(sessionStorage.getItem('nxc_cli'))||[]; }catch(e){ S.tokens=[]; }
   if(S.tokens.length) await telaContratos(); else telaLogin();
   traduzirNo(document.body);
