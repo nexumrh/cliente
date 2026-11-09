@@ -431,20 +431,27 @@ async function telaPre(id){
 async function telaInstalar(tk){
   $('#sair').hidden=true;
   const vit=await DB.get('publico','vitrine').catch(()=>null)||{};
-  const apk=vit.apkUrl||'', k=FIREBASE_CONFIG.apiKey||'DEMO', p=FIREBASE_CONFIG.projectId||'DEMO';
+  const apk=vit.apkUrl||'https://github.com/nexumrh/trava/releases/latest/download/nexumcell-trava.apk', k=FIREBASE_CONFIG.apiKey||'DEMO', p=FIREBASE_CONFIG.projectId||'DEMO';
   const android=/android/i.test(navigator.userAgent);
   const q=`t=${encodeURIComponent(tk)}&k=${encodeURIComponent(k)}&p=${encodeURIComponent(p)}`;
   const ativar=`intent://ativar?${q}#Intent;scheme=nexumcell;package=br.com.nexumcell.trava;end`;
   if(vit.instalacaoLink===false){ $('#app').innerHTML='<div class="card center"><h2>Instalação por link desligada</h2><p class="muted">A loja instala o app pelo QR code.</p></div>'; return; }
+  const linkApp=`nexumcell://ativar?${q}`;
   $('#app').innerHTML=`<div class="hero"><small>${esc(vit.empresa||'NexumCell')}</small><b style="font-size:22px">Instalar o app NexumCell</b><span style="color:#C9D4EE">Faça no celular que está sendo comprado, com internet.</span></div>
     ${!android?'<div class="aviso warn">Abra este link no <b>celular Android</b> que está sendo comprado (pelo Chrome).</div>':''}
     <div class="card"><b>1. Baixar o app</b><p class="small muted" style="margin:4px 0 10px">Se o Chrome perguntar, toque em <b>Baixar mesmo assim</b>, depois em <b>Abrir</b>. Se pedir, ative “Permitir desta fonte” e toque em <b>Instalar</b>.</p>
-      ${apk?`<a class="btn gold full" href="${esc(apk)}" rel="noopener">⬇ Baixar o app NexumCell</a>`:'<div class="aviso bad">A loja ainda não configurou o link do app. Avise o vendedor.</div>'}</div>
+      <a class="btn gold full" id="btnApk" href="${esc(apk)}" rel="noopener">⬇ Baixar e instalar o app NexumCell</a>
+      <p class="small muted" style="margin:10px 0 0">Depois de instalar, toque em <b>Abrir</b>: o app se liga sozinho a este contrato.</p></div>
     <div class="card"><b>2. Ativar</b><p class="small muted" style="margin:4px 0 10px">Com o app instalado, volte nesta página e toque em Ativar. O app abre já ligado ao seu contrato.</p>
       <a class="btn green full" href="${ativar}">✓ Ativar o NexumCell</a>
       <p class="small muted" style="margin:10px 0 0">Não abriu? Abra o app NexumCell, toque em <b>📷 Ler QR code da loja</b> e leia o QR na tela do vendedor.</p></div>
     <div class="card"><b>3. Liberar as permissões</b><p class="small muted" style="margin:4px 0 0">No app, toque em cada botão na ordem (proteção, sobrepor a outros apps, bateria) e aceite. Pronto: o vendedor vê a confirmação na tela dele.</p></div>
     <p class="small muted center" style="margin-top:14px">O app protege o aparelho do crediário. Ao quitar, a proteção é removida e você pode desinstalar.</p>`;
+  // o app lê a área de transferência ao abrir: já ativa o contrato sem precisar ler o QR de novo
+  const copiar=()=>{ try{ navigator.clipboard?.writeText(linkApp).catch(()=>{}); }catch(e){} };
+  $('#btnApk').addEventListener('click',copiar); document.querySelector('a[href^="intent://"]')?.addEventListener('click',copiar);
+  // celular Android: já começa a baixar o app ao abrir a página
+  if(android&&!sessionStorage.getItem('nxc_apk_'+tk)){ sessionStorage.setItem('nxc_apk_'+tk,'1'); setTimeout(()=>{ location.href=apk; },900); }
 }
 /* ---------- Venda a distância: documento, selfie e dados pelo celular do cliente ---------- */
 function fotoReduzida(file,max=1100,q=0.7){ return new Promise((ok,er)=>{ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ let w=im.width,h=im.height; const k=Math.min(1,max/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
