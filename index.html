@@ -403,6 +403,7 @@ async function telaPre(id){
         aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now()};
       const id=S.preServ?(await apiPre({acao:'enviar',...dados})).id:await DB.add('preanalises',dados);
       history.replaceState(null,'',`?pre=${id}${DEMO?'&demo':''}`);
+      if(S.preServ){ toast('Pré-análise enviada!','ok'); return telaPre(id); }   // resposta automática já aparece na tela
       $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pré-análise enviada!</h2><p>A ${esc(loja.nome||'loja')} vai analisar e chamar você no WhatsApp. Você também pode acompanhar por este link.</p>
         <p class="small muted">Protocolo <span class="mono">${esc(id)}</span></p>${loja.telefone?`<a class="btn green full" target="_blank" rel="noopener" href="https://wa.me/55${onlyDig(loja.telefone)}?text=${encodeURIComponent('Olá! Acabei de fazer a pré-análise (protocolo '+id+').')}">Avisar a loja no WhatsApp</a>`:''}</div>`;
     }catch(err){ console.error(err); m.textContent=err.doServidor?err.message:'Não foi possível enviar agora. Tente de novo.'; $('#pBtn').disabled=false; }
