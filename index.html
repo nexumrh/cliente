@@ -354,9 +354,15 @@ function abrirChat(){
 }
 
 /* ---------- pré-análise online ---------- */
+// a pré-análise vai pelo servidor (Cloudflare) quando a loja tem um; senão, direto no Firebase
+async function apiPre(dados){
+  const r=await fetch(S.preServ+'/api/preanalise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw Object.assign(new Error(j.erro||'Erro '+r.status),{doServidor:true}); return j;
+}
 async function telaPre(id){
   $('#sair').hidden=true;
-  if(id){ const x=await DB.get('preanalises',id).catch(()=>null);
+  const vit0=await DB.get('publico','vitrine').catch(()=>null); S.preServ=DEMO?'':String(vit0?.servidor||'').replace(/\/$/,'');
+  if(id){ const x=S.preServ?await apiPre({acao:'ver',id}).catch(()=>null):await DB.get('preanalises',id).catch(()=>null);
     if(!x){ $('#app').innerHTML='<div class="card center"><h2>Pré-análise não encontrada</h2></div>'; return; }
     const st={NOVA:['Recebida — aguardando a análise','b-blue'],CONTATADO:['Em análise — vamos falar com você','b-amber'],PRE_APROVADO:['Pré-aprovado!','b-green'],RECUSADA:['Não aprovada no momento','b-gray'],VIROU_VENDA:['Compra concluída','b-green']}[x.status]||[x.status,'b-gray'];
     $('#app').innerHTML=`<div class="hero"><small>Pré-análise de crédito</small><b style="font-size:22px">${esc(primeiroNome(x.nome))}</b><span style="color:#C9D4EE">${esc(x.aparelho||'')} · ${esc(x.lojaNome||'')}</span></div>
@@ -366,9 +372,9 @@ async function telaPre(id){
         <div class="row" style="gap:10px"><label style="flex:1">Dia<input id="agData" type="date" min="${hoje()}" required></label><label style="flex:1">Horário<select id="agHora">${['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00'].map(h=>`<option>${h}</option>`).join('')}</select></label></div>
         <button class="btn gold full" style="margin-top:12px">Agendar retirada</button></form>`:''}`;
     $('#agMudar')?.addEventListener('click',()=>{ $('#fAg').hidden=false; });
-    $('#fAg')?.addEventListener('submit',async e=>{ e.preventDefault(); try{ await DB.set('preanalises',id,{agendamento:{data:$('#agData').value,hora:$('#agHora').value,em:Date.now()}}); toast('Retirada agendada!','ok'); telaPre(id); }catch(err){ toast('Não foi possível agendar. Fale com a loja.','err'); } });
+    $('#fAg')?.addEventListener('submit',async e=>{ e.preventDefault(); try{ if(S.preServ) await apiPre({acao:'agendar',id,data:$('#agData').value,hora:$('#agHora').value}); else await DB.set('preanalises',id,{agendamento:{data:$('#agData').value,hora:$('#agHora').value,em:Date.now()}}); toast('Retirada agendada!','ok'); telaPre(id); }catch(err){ toast(err.doServidor?err.message:'Não foi possível agendar. Fale com a loja.','err'); } });
     return; }
-  const vit=await DB.get('publico','vitrine').catch(()=>null)||{aparelhos:[],lojas:[],entradaPct:30};
+  const vit=vit0||{aparelhos:[],lojas:[],entradaPct:30};
   $('#app').innerHTML=`<div class="hero"><small>${esc(vit.empresa||'NexumCell')}</small><b style="font-size:22px">Celular parcelado sem cartão</b><span style="color:#C9D4EE">Faça a pré-análise em 2 minutos. Entrada a partir de ${vit.entradaPct||30}%.</span></div>
     <form class="card" id="fPre">
       <label>Nome completo<input id="pNome" required maxlength="120" autocomplete="name"></label>
@@ -393,12 +399,13 @@ async function telaPre(id){
     const idade=$('#pNasc').value?Math.floor((Date.now()-new Date($('#pNasc').value))/31557600000):0; if(idade<18) return m.textContent='É preciso ter 18 anos ou mais.';
     if(!$('#pOk').checked) return m.textContent='Marque a autorização para continuar.';
     $('#pBtn').disabled=true;
-    try{ const id=await DB.add('preanalises',{nome:$('#pNome').value.trim().slice(0,120),cpf,nasc:$('#pNasc').value,telefone:tel,cidade:$('#pCid').value.trim(),renda:+$('#pRenda').value||0,profissao:$('#pProf').value.trim(),
-        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now()});
+    try{ const dados={nome:$('#pNome').value.trim().slice(0,120),cpf,nasc:$('#pNasc').value,telefone:tel,cidade:$('#pCid').value.trim(),renda:+$('#pRenda').value||0,profissao:$('#pProf').value.trim(),
+        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now()};
+      const id=S.preServ?(await apiPre({acao:'enviar',...dados})).id:await DB.add('preanalises',dados);
       history.replaceState(null,'',`?pre=${id}${DEMO?'&demo':''}`);
       $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pré-análise enviada!</h2><p>A ${esc(loja.nome||'loja')} vai analisar e chamar você no WhatsApp. Você também pode acompanhar por este link.</p>
         <p class="small muted">Protocolo <span class="mono">${esc(id)}</span></p>${loja.telefone?`<a class="btn green full" target="_blank" rel="noopener" href="https://wa.me/55${onlyDig(loja.telefone)}?text=${encodeURIComponent('Olá! Acabei de fazer a pré-análise (protocolo '+id+').')}">Avisar a loja no WhatsApp</a>`:''}</div>`;
-    }catch(err){ console.error(err); m.textContent='Não foi possível enviar agora. Tente de novo.'; $('#pBtn').disabled=false; }
+    }catch(err){ console.error(err); m.textContent=err.doServidor?err.message:'Não foi possível enviar agora. Tente de novo.'; $('#pBtn').disabled=false; }
   });
 }
 
