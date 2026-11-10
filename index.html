@@ -266,7 +266,8 @@ function cardContrato(ap){
       ${ap.status!=='CANCELADO'?`<button class="btn sm" data-pedido="${tk}" data-tipo="ASSISTENCIA">Meu aparelho deu defeito</button>`:''}
       ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?`<button class="btn sm gold" data-acordo="${tk}">Fazer acordo do atraso</button>`:''}
       ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
-      <button class="btn sm" data-pedido="${tk}" data-tipo="LGPD">Meus dados (LGPD)</button></div>
+      <button class="btn sm" data-pedido="${tk}" data-tipo="LGPD">Meus dados (LGPD)</button>
+      <a class="btn sm" href="?contrato=${encodeURIComponent(tk)}${DEMO?'&demo':''}" target="_blank" rel="noopener">📄 Contrato assinado</a></div>
     ${zapLoja(ap)}
   </div>`;
 }
@@ -428,6 +429,19 @@ async function telaPre(id){
 
 
 
+
+/* ---------- contrato assinado (aberto pelo app da trava ou pelo portal) ---------- */
+async function telaContrato(tk){
+  $('#sair').hidden=true;
+  const c=await DB.get('contratos',tk).catch(()=>null);
+  if(!c?.html){ $('#app').innerHTML='<div class="card center"><h2>Contrato ainda não disponível</h2><p class="muted">A loja ainda não publicou a cópia do seu contrato. Fale com a loja pelo WhatsApp ou tente mais tarde.</p></div>'; return; }
+  const semScript=c.html.replace(/<script[\s\S]*?<\/script>/gi,'');
+  $('#app').innerHTML=`<div class="hero"><small>Contrato nº ${esc(String(c.numero||''))}</small><b style="font-size:22px">Seu contrato assinado</b><span style="color:#C9D4EE">${esc(c.clienteNome||'')} · assinado em ${c.assinadoEm?fmtDT(c.assinadoEm):'—'}</span></div>
+    <div class="card"><button class="btn gold full" id="ctPdf">⬇ Baixar / salvar em PDF</button><p class="small muted" style="margin:8px 0 0">Na tela de impressão, escolha <b>Salvar como PDF</b>.</p></div>
+    <div class="card" style="padding:0;overflow:hidden"><iframe id="ctFrame" sandbox="allow-same-origin" style="width:100%;height:70vh;border:0;background:#fff"></iframe></div>`;
+  $('#ctFrame').srcdoc=semScript;
+  $('#ctPdf').onclick=()=>{ const w=window.open('','_blank'); if(!w){ const f=$('#ctFrame'); try{ f.contentWindow.print(); }catch(e){} return; } w.document.write(c.html); w.document.close(); };
+}
 /* ---------- Instalação da trava por link (aparelho em que o QR não funciona) ---------- */
 async function telaInstalar(tk){
   $('#sair').hidden=true;
@@ -714,6 +728,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   if(qs.has('pre')) return telaPre(qs.get('pre'));
   if(qs.get('remoto')) return telaRemota(qs.get('remoto'));
   if(qs.get('instalar')) return telaInstalar(qs.get('instalar'));
+  if(qs.get('contrato')) return telaContrato(qs.get('contrato'));
   try{ S.tokens=JSON.parse(sessionStorage.getItem('nxc_cli'))||[]; }catch(e){ S.tokens=[]; }
   if(S.tokens.length) await telaContratos(); else telaLogin();
   traduzirNo(document.body);
