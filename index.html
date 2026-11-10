@@ -232,6 +232,7 @@ function cardContrato(ap){
   const hp=prox?valorHoje(prox,ap):null;
   return `<div class="card">
     <div class="row" style="justify-content:space-between"><div><b>${esc((ap.marca||'')+' '+(ap.modelo||''))}</b><br><span class="small muted">Contrato nº ${esc(ap.vendaNumero)} · ${esc(ap.lojaNome||'')}</span></div><span class="badge b-${cor}">${esc(st)}</span></div>
+    ${ap.promessaApp&&ap.liberadoAte>Date.now()&&!encerrado?`<div class="aviso ok"><b>Você prometeu pagar ${brl(ap.promessaApp.valor)} até ${fmtD(ap.promessaApp.data)}.</b> O celular fica liberado até lá. Se o pagamento não cair até essa data, ele volta a ser bloqueado.</div>`:''}
     ${roubo?`<div class="aviso bad"><b>Você comunicou ${esc(String(ap.roubo.tipo).toLowerCase())} em ${fmtDT(ap.roubo.em)}.</b> O aparelho foi travado. As parcelas continuam valendo.<br>${guiaRoubo(ap.roubo.tipo)}</div>`:''}
     ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?(()=>{ const et=etapas(ap); return hp.dias<et.parcial?`<div class="aviso warn"><b>Faltam ${et.parcial-hp.dias} dia(s) para limitar as funções</b> (redes sociais e vídeos) e ${et.total-hp.dias} dia(s) para o bloqueio total. Pague agora para evitar.</div>`:hp.dias<et.total?`<div class="aviso bad">Redes sociais e vídeos estão bloqueados. <b>Faltam ${et.total-hp.dias} dia(s) para o bloqueio total.</b> Pague agora para liberar.</div>`:''; })():''}
     ${ap.vip&&!encerrado?`<div class="aviso ok"><b>${ap.vip==='Ouro'?'🥇':'🥈'} Cliente VIP ${esc(ap.vip)}</b><br><span class="small">Você é um dos nossos melhores pagadores. Na próxima compra, seus juros são menores.</span></div>`:''}
@@ -267,6 +268,10 @@ function cardContrato(ap){
       ${!encerrado&&!roubo?`<button class="btn sm" style="color:var(--bad);border-color:#F2C9C9" data-roubo="${tk}">Roubo, furto ou perda</button>`:''}
       ${ap.status!=='CANCELADO'?`<button class="btn sm" data-pedido="${tk}" data-tipo="ASSISTENCIA">Meu aparelho deu defeito</button>`:''}
       ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?`<button class="btn sm gold" data-acordo="${tk}">Fazer acordo do atraso</button>`:''}
+      ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'&&!ap.promessaApp&&(ap.promessaMaxDias??5)>0&&(DEMO||servCli(ap))?`<button class="btn sm gold" data-promessa="${tk}">Prometer o pagamento</button>`:''}
+      ${ap.protecao&&!encerrado&&!roubo?`<button class="btn sm" data-pedido="${tk}" data-tipo="PROTECAO">Usar minha Proteção</button>`:''}
+      ${!encerrado?`<button class="btn sm" data-pedido="${tk}" data-tipo="DADOS">Atualizar telefone ou endereço</button>`:''}
+      ${abertas.length?`<button class="btn sm" data-carne="${tk}">Baixar carnê</button>`:''}
       ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
       <button class="btn sm" data-pedido="${tk}" data-tipo="LGPD">Meus dados (LGPD)</button>
       <a class="btn sm" href="?contrato=${encodeURIComponent(tk)}${DEMO?'&demo':''}" target="_blank" rel="noopener">📄 Contrato assinado</a></div>
@@ -567,7 +572,7 @@ async function formAcordo(tk){
   };
 }
 /* ---------- pedidos: assistência técnica e LGPD ---------- */
-const PED_TIPO={VENCIMENTO:'Mudança do dia de vencimento',ASSISTENCIA:'Assistência técnica',LGPD_COPIA:'Cópia dos meus dados',LGPD_EXCLUSAO:'Exclusão dos meus dados'};
+const PED_TIPO={PROTECAO:'Proteção NexumCell (conserto)',DADOS:'Atualização de telefone/endereço',VENCIMENTO:'Mudança do dia de vencimento',ASSISTENCIA:'Assistência técnica',LGPD_COPIA:'Cópia dos meus dados',LGPD_EXCLUSAO:'Exclusão dos meus dados'};
 const PED_ST={ABERTO:'Recebido — aguardando a loja',RECEBIDO:'Aparelho na loja',EM_REPARO:'Em conserto',PRONTO:'Pronto para retirar',ENTREGUE:'Entregue',RECUSADO:'Sem cobertura da garantia',ATENDIDO:'Atendido'};
 const pedLocais = tk => { try{ return JSON.parse(localStorage.getItem('nxc_ped_'+tk))||{}; }catch(e){ return {}; } };
 function blocoPedidos(ap){
@@ -585,20 +590,75 @@ function formPedido(tk,tipo){
     <label>O que está acontecendo com o aparelho?<textarea id="pdDesc" rows="3" maxlength="500" placeholder="ex.: a tela apaga sozinha, não carrega, o alto-falante não funciona"></textarea></label>
     <p class="small muted">A loja vai analisar e combinar com você a entrega do aparelho. Defeitos causados por queda, água ou mau uso não têm cobertura da garantia.</p>
     <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar pedido</button>`);
+  else if(tipo==='PROTECAO') openModal(`<h2>Usar minha Proteção NexumCell</h2><p class="muted" style="margin-top:-4px">${esc(ap.marca+' '+ap.modelo)} · contrato nº ${esc(ap.vendaNumero)}${ap.protecao?.cobertura?`<br>Cobertura: ${esc(ap.protecao.cobertura)}`:''}</p>
+    <label>O que aconteceu com o aparelho?<textarea id="pdDesc" rows="3" maxlength="500" placeholder="ex.: caiu e a tela trincou, o touch não responde na parte de baixo"></textarea></label>
+    <label>Fotos do problema (até 3)<input type="file" id="pdFotos" accept="image/*" multiple></label><div id="pdPrev" class="row" style="gap:6px;margin-top:6px"></div>
+    <p class="small muted">A loja analisa as fotos e combina com você a entrega do aparelho para o conserto. Enquanto ele estiver na loja, o contrato continua normalmente.</p>
+    <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar pedido</button>`);
+  else if(tipo==='DADOS') openModal(`<h2>Atualizar telefone ou endereço</h2><p class="muted" style="margin-top:-4px">Preencha só o que mudou. A loja confirma com você antes de valer.</p>
+    <label>Telefone (WhatsApp) com DDD<input id="dTel1" inputmode="tel" placeholder="(45) 99999-9999"></label>
+    <label>Outro telefone para recado (opcional)<input id="dTel2" inputmode="tel"></label>
+    <label>CEP<input id="dCep" inputmode="numeric" maxlength="9"></label>
+    <label>Endereço com número<input id="dEnd" maxlength="120"></label>
+    <div class="row" style="gap:8px"><label style="flex:1">Bairro<input id="dBairro" maxlength="60"></label><label style="flex:1">Cidade<input id="dCid" maxlength="60"></label><label style="width:70px">UF<input id="dUf" maxlength="2"></label></div>
+    <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar</button>`);
   else openModal(`<h2>Meus dados (LGPD)</h2><p class="muted" style="margin-top:-4px">A Lei Geral de Proteção de Dados garante que você saiba quais dados seus a loja guarda.</p>
     <label>O que você quer?<select id="pdTipo"><option value="LGPD_COPIA">Receber uma cópia dos meus dados</option><option value="LGPD_EXCLUSAO">Pedir a exclusão dos meus dados</option></select></label>
     <label>Observação (opcional)<textarea id="pdDesc" rows="2" maxlength="300"></textarea></label>
     <p class="small muted">Enquanto o contrato estiver ativo, os dados precisam ser mantidos para cumprir o contrato e a lei. Depois do encerramento, as fotos do documento e a biometria podem ser apagadas. A resposta chega em até 15 dias.</p>
     <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar pedido</button>`);
+  let fotos=[];
+  $('#pdFotos')?.addEventListener('change',async e=>{ fotos=[]; for(const f of [...e.target.files].slice(0,3)){ try{ fotos.push(await fotoReduzida(f,900,0.6)); }catch(err){} } $('#pdPrev').innerHTML=fotos.map(f=>`<img src="${f}" style="width:70px;height:70px;object-fit:cover;border-radius:8px">`).join(''); });
+  $('#dCep')?.addEventListener('change',async e=>{ const c=onlyDig(e.target.value); if(c.length!==8) return; try{ const r=await (await fetch('https://viacep.com.br/ws/'+c+'/json/')).json(); if(!r.erro){ $('#dEnd').value=r.logradouro?r.logradouro+', ':''; $('#dBairro').value=r.bairro||''; $('#dCid').value=r.localidade||''; $('#dUf').value=r.uf||''; } }catch(err){} });
   $('#pdBtn').onclick=async()=>{
-    const t=tipo==='ASSISTENCIA'||tipo==='VENCIMENTO'?tipo:$('#pdTipo').value, desc=$('#pdDesc').value.trim();
-    if(t==='ASSISTENCIA'&&desc.length<10) return $('#pdMsg').textContent='Descreva o defeito com um pouco mais de detalhe.';
+    const t=['ASSISTENCIA','VENCIMENTO','PROTECAO','DADOS'].includes(tipo)?tipo:$('#pdTipo').value, desc=($('#pdDesc')?.value||'').trim();
+    if((t==='ASSISTENCIA'||t==='PROTECAO')&&desc.length<10) return $('#pdMsg').textContent='Descreva o problema com um pouco mais de detalhe.';
+    if(t==='PROTECAO'&&!fotos.length) return $('#pdMsg').textContent='Mande pelo menos uma foto do problema.';
+    let dados=null;
+    if(t==='DADOS'){ const g=id=>($('#'+id).value||'').trim(); dados={tel1:onlyDig(g('dTel1')),tel2:onlyDig(g('dTel2')),cep:onlyDig(g('dCep')),endereco:g('dEnd').slice(0,120),bairro:g('dBairro').slice(0,60),cidade:g('dCid').slice(0,60),uf:g('dUf').toUpperCase().slice(0,2)};
+      Object.keys(dados).forEach(k=>{ if(!dados[k]) delete dados[k]; }); if(!Object.keys(dados).length) return $('#pdMsg').textContent='Preencha o que mudou.';
+      if(dados.tel1&&dados.tel1.length<10) return $('#pdMsg').textContent='Telefone com DDD.'; if(dados.tel2&&dados.tel2.length<10) return $('#pdMsg').textContent='Telefone de recado com DDD.'; }
     $('#pdBtn').disabled=true;
-    const d={tipo:t,token:tk,vendaId:ap.vendaId||'',vendaNumero:ap.vendaNumero||0,lojaId:ap.lojaId||'',lojaNome:ap.lojaNome||'',clienteNome:ap.clienteNome||'',marca:ap.marca||'',modelo:ap.modelo||'',imei:ap.imei||'',descricao:t==='VENCIMENTO'?`Novo dia: ${$('#pdDia').value}${desc?' · '+desc:''}`:desc,status:'ABERTO',criadoEm:Date.now(),...(t==='VENCIMENTO'?{novoDia:+$('#pdDia').value}:{})};
+    const d={tipo:t,token:tk,vendaId:ap.vendaId||'',vendaNumero:ap.vendaNumero||0,lojaId:ap.lojaId||'',lojaNome:ap.lojaNome||'',clienteNome:ap.clienteNome||'',marca:ap.marca||'',modelo:ap.modelo||'',imei:ap.imei||'',descricao:t==='DADOS'?'Atualização de telefone/endereço':t==='VENCIMENTO'?`Novo dia: ${$('#pdDia').value}${desc?' · '+desc:''}`:desc,status:'ABERTO',criadoEm:Date.now(),...(t==='VENCIMENTO'?{novoDia:+$('#pdDia').value}:{}),...(fotos.length?{fotos}:{}),...(dados?{dados}:{})};
     try{ const id=await DB.add('pedidos',d); const l=pedLocais(tk); l[id]={tipo:t,status:'ABERTO',criadoEm:d.criadoEm}; try{ localStorage.setItem('nxc_ped_'+tk,JSON.stringify(l)); }catch(e){}
-      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>A loja já recebeu e vai responder por aqui${t==='ASSISTENCIA'?' e pelo WhatsApp':''}.</p></div>${zapLoja(ap)}`); telaContratos();
+      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>${t==='DADOS'?'A loja vai ligar no número novo para confirmar e depois atualizar o seu cadastro.':`A loja já recebeu e vai responder por aqui${['ASSISTENCIA','PROTECAO'].includes(t)?' e pelo WhatsApp':''}.`}</p></div>${zapLoja(ap)}`); telaContratos();
     }catch(e){ console.error(e); $('#pdMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#pdBtn').disabled=false; }
   };
+}
+
+/* ---------- promessa de pagamento pelo celular ---------- */
+const servCli=ap=>String(ap.servidor||ap.servidorPix||'').trim().replace(/\/$/,'').startsWith('https://')?String(ap.servidor||ap.servidorPix).trim().replace(/\/$/,''):'';
+function addDiasIso(iso,n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function formPromessa(tk){
+  const ap=S.aps[tk], max=Math.min(10,Math.max(1,+(ap.promessaMaxDias??5)||5)), h=new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+  const atr=(ap.parcelas||[]).filter(p=>!p.pago&&p.venc<h), tot=atr.reduce((s,p)=>s+valorHoje(p,ap).valor,0);
+  openModal(`<h2>Prometer o pagamento</h2><p class="muted" style="margin-top:-4px">Você tem ${atr.length} parcela(s) em atraso: <b>${brl(tot)}</b> hoje.</p>
+    <p>Escolha o dia em que vai pagar. O celular fica <b>liberado até essa data</b>. Você só pode usar isso <b>uma vez</b> neste contrato.</p>
+    <label>Vou pagar até<input type="date" id="prData" min="${addDiasIso(h,1)}" max="${addDiasIso(h,max)}" value="${addDiasIso(h,Math.min(3,max))}"></label>
+    <p class="small muted">Se o pagamento não cair até essa data, o celular volta a ser bloqueado. A multa e os juros continuam contando até o pagamento.</p>
+    <div class="erro" id="prMsg"></div><button class="btn pri full" id="prBtn">Confirmar a promessa</button>`);
+  $('#prBtn').onclick=async()=>{ const data=$('#prData').value; if(!data) return $('#prMsg').textContent='Escolha a data.'; $('#prBtn').disabled=true;
+    try{ let r;
+      if(DEMO){ const ate=new Date(data+'T23:59:59').getTime(); await DB.set('aparelhos',tk,{liberadoAte:ate,promessaApp:{data,valor:Math.round(tot*100)/100,em:Date.now(),ate}}); r={data,valor:tot}; }
+      else { const x=await fetch(servCli(ap)+'/api/cliente-app',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({acao:'promessa',token:tk,data})}); r=await x.json(); if(!x.ok) throw new Error(r.erro||'Não foi possível agora.'); }
+      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Promessa registrada</h2><p>Combinado: você paga <b>${brl(r.valor)}</b> até <b>${fmtD(r.data)}</b>. O celular é liberado em instantes (se estiver sem internet, assim que conectar).</p></div>`); telaContratos();
+    }catch(e){ $('#prMsg').textContent=e.message; $('#prBtn').disabled=false; } };
+}
+/* ---------- carnê digital (todas as parcelas em aberto, com PIX de cada uma) ---------- */
+function carne(tk){
+  const ap=S.aps[tk], ps=(ap.parcelas||[]).filter(p=>!p.pago), N=(ap.parcelas||[]).length, desc=+ap.descontoPct||0;
+  const blocos=ps.map(p=>{ let cod=''; try{ cod=brcode(ap,+p.valor,`NXC${ap.vendaNumero}P${p.n}`)||''; }catch(e){}
+    let qr=''; try{ if(cod){ const q=qrcode(0,'M'); q.addData(cod); q.make(); qr=q.createSvgTag({cellSize:2,margin:1,scalable:true}); } }catch(e){}
+    return `<div class="bl"><div class="esq"><b>${esc(ap.recebedor||'NexumCell')}</b><span>Contrato nº ${esc(ap.vendaNumero)}</span><span>Parcela <b>${p.n}/${N}</b></span><span>Vencimento <b>${fmtD(p.venc)}</b></span><span class="vl">${brl(p.valor)}</span></div>
+      <div class="dir"><div class="info"><b>${esc(ap.clienteNome||'')}</b> · ${esc((ap.marca||'')+' '+(ap.modelo||''))}<br>Parcela ${p.n} de ${N} · vence em <b>${fmtD(p.venc)}</b> · valor <b>${brl(p.valor)}</b>${desc?`<br>Pagando até o dia anterior ao vencimento: <b>${brl(p.valor*(1-desc/100))}</b> (${desc}% de desconto, pelo app)`:''}<br>Depois do vencimento: multa de ${ap.multaPct||0}% + juros de ${String(ap.moraDiaPct||0).replace('.',',')}% ao dia.
+        ${cod?`<div class="cod">PIX copia e cola: ${esc(cod)}</div>`:''}${p.asaasLink?`<div class="cod">Boleto: ${esc(p.asaasLink)}</div>`:''}</div>${qr?`<div class="qr">${qr}<small>PIX</small></div>`:''}</div></div>`; }).join('');
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Carnê — contrato ${esc(ap.vendaNumero)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;color:#111;margin:14px}h1{font-size:17px;margin:0 0 4px}.sub{color:#555;font-size:12px;margin-bottom:12px}
+    .bl{display:flex;border:1px dashed #888;margin-bottom:8px;page-break-inside:avoid;font-size:11.5px}.esq{width:150px;border-right:1px dashed #888;padding:8px;display:flex;flex-direction:column;gap:3px}.esq .vl{font-size:16px;font-weight:bold;margin-top:4px}
+    .dir{flex:1;display:flex;gap:8px;padding:8px}.info{flex:1;line-height:1.5}.cod{font-family:monospace;font-size:8.5px;word-break:break-all;color:#333;margin-top:4px}.qr{width:96px;text-align:center}.qr svg{width:96px;height:96px}.qr small{display:block;color:#555}
+    button{padding:10px 16px;margin:10px 0;font-size:15px}@media print{button{display:none}}</style></head><body>
+    <h1>Carnê — ${esc((ap.marca||'')+' '+(ap.modelo||''))} · contrato nº ${esc(ap.vendaNumero)}</h1><div class="sub">${esc(ap.lojaNome||'')}${ap.lojaTelefone?' · '+esc(ap.lojaTelefone):''} · ${ps.length} parcela(s) em aberto · gerado em ${new Date().toLocaleString('pt-BR')}</div>
+    <button onclick="print()">Imprimir / salvar em PDF</button>${blocos}<p class="sub">Os valores podem mudar se houver atraso, acordo ou troca do vencimento. Confira sempre no app antes de pagar.</p></body></html>`;
+  const w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank'); if(!w) toast('Permita abrir janelas para baixar o carnê','err');
 }
 
 /* ---------- assinatura do contrato no celular do cliente ---------- */
@@ -711,6 +771,8 @@ document.addEventListener('click',e=>{
   const p=e.target.closest('[data-pagar]'); if(p){ const n=+p.dataset.n; pagar(p.dataset.pagar,n,+p.dataset.v,n>0?`Parcela ${n} · contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`:`Quitação do contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`); return; }
   const r=e.target.closest('[data-roubo]'); if(r){ formRoubo(r.dataset.roubo); return; }
   const pd=e.target.closest('[data-pedido]'); if(pd){ formPedido(pd.dataset.pedido,pd.dataset.tipo); return; }
+  const pm=e.target.closest('[data-promessa]'); if(pm){ formPromessa(pm.dataset.promessa); return; }
+  const cn=e.target.closest('[data-carne]'); if(cn){ carne(cn.dataset.carne); return; }
   const ac=e.target.closest('[data-acordo]'); if(ac){ formAcordo(ac.dataset.acordo); return; }
   const rc=e.target.closest('[data-recibo]'); if(rc){ recibo(rc.dataset.recibo,+rc.dataset.n); return; }
   const pa=e.target.closest('[data-pixauto]'); if(pa){ ativarPixAutomatico(pa.dataset.pixauto); return; }
