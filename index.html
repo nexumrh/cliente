@@ -264,6 +264,7 @@ function cardContrato(ap){
     <div class="row" style="margin-top:14px;gap:8px">
       ${!encerrado&&!roubo?`<button class="btn sm" style="color:var(--bad);border-color:#F2C9C9" data-roubo="${tk}">Roubo, furto ou perda</button>`:''}
       ${ap.status!=='CANCELADO'?`<button class="btn sm" data-pedido="${tk}" data-tipo="ASSISTENCIA">Meu aparelho deu defeito</button>`:''}
+      ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?`<button class="btn sm gold" data-acordo="${tk}">Fazer acordo do atraso</button>`:''}
       ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
       <button class="btn sm" data-pedido="${tk}" data-tipo="LGPD">Meus dados (LGPD)</button></div>
     ${zapLoja(ap)}
@@ -529,6 +530,26 @@ function formNps(tk,n){
     try{ localStorage.setItem('nxc_nps_'+tk,'1'); }catch(e){} openModal('<div class="center"><div class="ic ok">'+svg('<path d="M20 6 9 17l-5-5"/>')+'</div><h2>Obrigado!</h2><p>Sua opinião ajuda a loja a melhorar.</p></div>'); telaContratos(); };
 }
 
+
+/* ---------- acordo do atraso pedido pelo cliente ---------- */
+async function formAcordo(tk){
+  const ap=S.aps[tk], h=hoje(), at=(ap.parcelas||[]).filter(p=>!p.pago&&p.venc<h), tot=at.reduce((s,p)=>s+valorHoje(p,ap).valor,0);
+  openModal(`<h2>Fazer acordo do atraso</h2><p class="muted" style="margin-top:-4px">Você tem <b>${at.length} parcela(s) em atraso</b>, total de <b>${brl(tot)}</b> hoje.</p>
+    <label>Em quantas vezes você consegue pagar o atraso?<select id="acN">${[1,2,3,4,5,6].map(n=>`<option value="${n}" ${n===2?'selected':''}>${n}x de ${brl(tot/n)}</option>`).join('')}</select></label>
+    <label>Quer explicar algo? (opcional)<textarea id="acObs" rows="2" maxlength="300" placeholder="ex.: fiquei sem trabalho, recebo dia 5"></textarea></label>
+    <p class="small muted">A loja confere e confirma o acordo com você. Os valores finais podem mudar conforme as regras do contrato.</p>
+    <div class="erro" id="acMsg"></div><button class="btn pri full" id="acBtn">Pedir o acordo</button>`);
+  $('#acBtn').onclick=async()=>{ const b=$('#acBtn'); b.disabled=true;
+    try{
+      const vit=await DB.get('publico','vitrine').catch(()=>null), sv=DEMO?'':String(vit?.servidor||'').replace(/\/$/,'');
+      let r={ok:true,horas:0};
+      if(sv){ const x=await fetch(sv+'/api/acordo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk,parcelas:+$('#acN').value,obs:$('#acObs').value.trim()})}); r=await x.json().catch(()=>({})); if(!x.ok) throw Object.assign(new Error(r.erro||'Erro '+x.status),{srv:true}); }
+      else if(!DEMO) throw new Error('A loja ainda não ligou o acordo pelo portal. Fale com a loja pelo WhatsApp.');
+      closeModal();
+      openModal(`<h2>Pedido enviado ✔</h2><p>A loja recebeu o seu pedido de acordo e vai falar com você pelo WhatsApp.</p>${r.horas?`<div class="aviso ok"><b>Seu aparelho foi liberado por ${r.horas} horas</b> enquanto a loja confirma o acordo.</div>`:''}<button class="btn pri full" onclick="closeModal()">Entendi</button>`);
+    }catch(e){ $('#acMsg').textContent=e.message; b.disabled=false; }
+  };
+}
 /* ---------- pedidos: assistência técnica e LGPD ---------- */
 const PED_TIPO={VENCIMENTO:'Mudança do dia de vencimento',ASSISTENCIA:'Assistência técnica',LGPD_COPIA:'Cópia dos meus dados',LGPD_EXCLUSAO:'Exclusão dos meus dados'};
 const PED_ST={ABERTO:'Recebido — aguardando a loja',RECEBIDO:'Aparelho na loja',EM_REPARO:'Em conserto',PRONTO:'Pronto para retirar',ENTREGUE:'Entregue',RECUSADO:'Sem cobertura da garantia',ATENDIDO:'Atendido'};
@@ -674,6 +695,7 @@ document.addEventListener('click',e=>{
   const p=e.target.closest('[data-pagar]'); if(p){ const n=+p.dataset.n; pagar(p.dataset.pagar,n,+p.dataset.v,n>0?`Parcela ${n} · contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`:`Quitação do contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`); return; }
   const r=e.target.closest('[data-roubo]'); if(r){ formRoubo(r.dataset.roubo); return; }
   const pd=e.target.closest('[data-pedido]'); if(pd){ formPedido(pd.dataset.pedido,pd.dataset.tipo); return; }
+  const ac=e.target.closest('[data-acordo]'); if(ac){ formAcordo(ac.dataset.acordo); return; }
   const rc=e.target.closest('[data-recibo]'); if(rc){ recibo(rc.dataset.recibo,+rc.dataset.n); return; }
   const pa=e.target.closest('[data-pixauto]'); if(pa){ ativarPixAutomatico(pa.dataset.pixauto); return; }
   const np=e.target.closest('[data-nps]'); if(np){ formNps(np.dataset.nps,+np.dataset.n); return; }
@@ -697,5 +719,6 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   traduzirNo(document.body);
 })();
 </script>
+<p class="center small" style="margin:26px 0 18px"><a href="privacidade.html" style="color:inherit">Política de privacidade</a> · <a href="termos.html" style="color:inherit">Termos de uso</a></p>
 </body>
 </html>
