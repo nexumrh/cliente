@@ -283,6 +283,7 @@ function cardContrato(ap){
       ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?`<button class="btn sm gold" data-acordo="${tk}">Fazer acordo do atraso</button>`:''}
       ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'&&!ap.promessaApp&&(ap.promessaMaxDias??5)>0&&(DEMO||servCli(ap))?`<button class="btn sm gold" data-promessa="${tk}">Prometer o pagamento</button>`:''}
       ${ap.protecao&&!encerrado&&!roubo?`<button class="btn sm" data-pedido="${tk}" data-tipo="PROTECAO">Usar minha Proteção</button>`:''}
+      ${podeUpgrade(ap)&&!encerrado?`<button class="btn sm gold" data-upgrade="${tk}">📱 Trocar por um aparelho novo</button>`:''}
       ${!encerrado?`<button class="btn sm" data-pedido="${tk}" data-tipo="DADOS">Atualizar telefone ou endereço</button>`:''}
       ${abertas.length?`<button class="btn sm" data-carne="${tk}">Baixar carnê</button>`:''}
       ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
@@ -551,7 +552,8 @@ async function telaRemota(tk){
       ${nav()}</div>`,
     ()=>`<div class="card">${cab('Selfie','Precisamos conferir que é você mesmo. Fique em lugar claro, sem óculos escuros nem boné, e centralize o rosto.')}
       ${F.selfie?`<div class="rm-foto ok"><img src="${F.selfie}" alt=""><b>Selfie ✓</b><div class="d">Ficou boa? Se não, tire outra.</div><button type="button" class="btn sm" id="rSelfieDeNovo">📷 Tirar outra</button></div>`
-        :`<div class="rm-cam" id="rCam"><video id="rVid" playsinline autoplay muted></video><div class="ov"></div></div>
+        :`<div class="rm-cam" id="rCam"><video id="rVid" playsinline autoplay muted></video><div class="ov"></div><div id="rPasso" style="position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:19px;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.75)"></div></div>
+          <p class="small muted" style="text-align:center;margin:8px 0 0">Ao tocar no botão, siga as 3 instruções: olhar, virar o rosto e sorrir.</p>
           <div class="row" style="gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" id="rFoto">📷 Tirar selfie</button><label class="btn" id="rAlt" style="cursor:pointer" hidden>Abrir a câmera do celular<input type="file" accept="image/*" capture="user" data-ft="selfie" hidden></label></div>`}
       ${nav()}</div>`,
     ()=>`<div class="card">${cab('Seus dados','Preencha igual está no documento.')}
@@ -591,7 +593,7 @@ async function telaRemota(tk){
   const enviar=async()=>{ const b=$('#rProx'), m=$('#rMsg'); b.disabled=true; b.innerHTML='<span class="spin"></span> Enviando…';
     const dados={nome:D.nome,cpf:onlyDig(D.cpf),nasc:D.nasc,rg:D.rg||'',docTipo:D.docTipo,docDigital:!!D.digital,nacionalidade:D.nacionalidade||'',mae:D.mae,telefone:onlyDig(D.telefone),telefone2:onlyDig(D.telefone2),ref1Nome:D.ref1Nome,ref1Par:D.ref1Par,
       email:D.email||'',cep:onlyDig(D.cep),endereco:D.endereco,bairro:D.bairro,cidade:D.cidade,uf:(D.uf||'').toUpperCase(),renda:+D.renda||0,profissao:D.profissao};
-    try{ if(S.preServ) await apiRemota({acao:'enviar',token:tk,dados,frente:F.frente,verso:F.verso||'',selfie:F.selfie,aceite:true});
+    try{ if(S.preServ) await apiRemota({acao:'enviar',token:tk,dados,frente:F.frente,verso:F.verso||'',selfie:F.selfie,mosaico:F.mosaico||'',vidaMov:D.vidaMov??null,aceite:true});
       $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Enviado para análise!</h2><p>A ${esc(info.loja||'loja')} recebeu seus documentos.</p>
         <ul class="rm-list" style="text-align:left"><li><span class="e">⏱️</span><div><b>Resposta em poucos minutos</b><span>A análise começa agora.</span></div></li><li><span class="e">💬</span><div><b>Fique de olho no WhatsApp</b><span>${info.vendedor?esc(info.vendedor)+' chama':'O vendedor chama'} você no número ${esc(D.telefone)}.</span></div></li></ul>
         <p class="small muted">Proposta nº ${esc(String(info.numero))}${DEMO?' · demonstração (nada foi enviado)':''}. Pode fechar esta página.</p></div>`;
@@ -607,14 +609,22 @@ async function telaRemota(tk){
     $('#cpf')?.addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
     $('#cep')?.addEventListener('input',async e=>{ const c=onlyDig(e.target.value).slice(0,8); e.target.value=c.replace(/(\d{5})(\d)/,'$1-$2'); if(c.length!==8) return;
       try{ const r=await (await fetch(`https://viacep.com.br/ws/${c}/json/`)).json(); if(r.erro) return; if(!$('#endereco').value) $('#endereco').value=r.logradouro?r.logradouro+', ':''; if(r.bairro) $('#bairro').value=r.bairro; if(r.localidade) $('#cidade').value=r.localidade; if(r.uf) $('#uf').value=r.uf; }catch(_){} });
-    $('#rSelfieDeNovo')?.addEventListener('click',()=>{ delete F.selfie; des(); });
+    $('#rSelfieDeNovo')?.addEventListener('click',()=>{ delete F.selfie; delete F.mosaico; delete D.vidaMov; des(); });
     if(passo===2&&!F.selfie){ const vid=$('#rVid');
       navigator.mediaDevices?.getUserMedia({video:{facingMode:'user',width:{ideal:1280}},audio:false}).then(s=>{ if(passo!==2||!$('#rVid')){ s.getTracks().forEach(t=>t.stop()); return; } stream=s; vid.srcObject=s; })
         .catch(()=>{ $('#rCam').hidden=true; $('#rFoto').hidden=true; $('#rAlt').hidden=false; });
       if(!navigator.mediaDevices){ $('#rCam').hidden=true; $('#rFoto').hidden=true; $('#rAlt').hidden=false; }
-      $('#rFoto').onclick=()=>{ if(!vid.videoWidth) return $('#rMsg').textContent='A câmera ainda não está pronta. Aguarde um instante.';
-        const k=Math.min(1,900/Math.max(vid.videoWidth,vid.videoHeight)), cv=document.createElement('canvas'); cv.width=Math.round(vid.videoWidth*k); cv.height=Math.round(vid.videoHeight*k);
-        const x=cv.getContext('2d'); x.translate(cv.width,0); x.scale(-1,1); x.drawImage(vid,0,0,cv.width,cv.height); F.selfie=cv.toDataURL('image/jpeg',0.82); des(); }; }
+      $('#rFoto').onclick=async()=>{ if(!vid.videoWidth) return $('#rMsg').textContent='A câmera ainda não está pronta. Aguarde um instante.';
+        // prova de vida: 3 quadros com instrução (olhar, virar, sorrir); sem movimento = pode ser foto de foto
+        const bt=$('#rFoto'), ps=$('#rPasso'); bt.disabled=true; $('#rMsg').textContent='';
+        const quadro=()=>{ const k=Math.min(1,900/Math.max(vid.videoWidth,vid.videoHeight)), cv=document.createElement('canvas'); cv.width=Math.round(vid.videoWidth*k); cv.height=Math.round(vid.videoHeight*k); const x=cv.getContext('2d'); x.translate(cv.width,0); x.scale(-1,1); x.drawImage(vid,0,0,cv.width,cv.height); return cv; };
+        const cinza=cv=>{ const W=64,H=48,t=document.createElement('canvas'); t.width=W; t.height=H; t.getContext('2d').drawImage(cv,cv.width*0.25,cv.height*0.1,cv.width*0.5,cv.height*0.8,0,0,W,H); const d=t.getContext('2d').getImageData(0,0,W,H).data,o=[]; for(let i=0;i<d.length;i+=4) o.push((d[i]+d[i+1]+d[i+2])/3); return o; };
+        const dif=(a,b)=>{ const x=cinza(a),y=cinza(b); let s=0; for(let i=0;i<x.length;i++) s+=Math.abs(x[i]-y[i]); return s/x.length; };
+        const qs=[]; for(const tx of ['Olhe para a câmera','Vire o rosto devagar para o lado','Agora sorria 🙂']){ ps.textContent=tx; await new Promise(o=>setTimeout(o,1700)); if(!$('#rVid')) return; qs.push(quadro()); }
+        ps.textContent=''; const mov=Math.max(dif(qs[0],qs[1]),dif(qs[0],qs[2]));
+        if(mov<=4){ $('#rMsg').textContent='O rosto não se mexeu. Toque de novo e siga as instruções que aparecem na tela.'; bt.disabled=false; return; }
+        const h=220, ws=qs.map(q=>Math.round(q.width*h/q.height)), m=document.createElement('canvas'); m.width=ws.reduce((a,b)=>a+b,0); m.height=h; const mx=m.getContext('2d'); let px=0; qs.forEach((q,i)=>{ mx.drawImage(q,px,0,ws[i],h); px+=ws[i]; });
+        F.selfie=qs[0].toDataURL('image/jpeg',0.82); F.mosaico=m.toDataURL('image/jpeg',0.7); D.vidaMov=Math.round(mov*10)/10; des(); }; }
   };
   des();
 }
@@ -643,6 +653,24 @@ function formNps(tk,n){
 
 
 /* ---------- acordo do atraso pedido pelo cliente ---------- */
+/* ---------- upgrade: quem pagou pelo menos metade em dia pode pedir a troca por um aparelho novo ---------- */
+function podeUpgrade(ap){ const ps=ap.parcelas||[], h=hoje(); if(ps.length<2||ap.status==='CANCELADO') return false;
+  const pagas=ps.filter(p=>p.pago).length; return pagas<ps.length&&pagas>=Math.ceil(ps.length/2)&&!ps.some(p=>!p.pago&&p.venc<h); }
+function formUpgrade(tk){
+  const ap=S.aps[tk], ps=ap.parcelas||[], pagas=ps.filter(p=>p.pago).length, ja=Object.values(pedLocais(tk)).some(x=>x.tipo==='UPGRADE'&&x.status==='ABERTO');
+  if(ja) return openModal(`<h2>Pedido já enviado</h2><p>A loja já recebeu seu pedido de troca e vai chamar você no WhatsApp.</p>${zapLoja(ap)}`);
+  openModal(`<h2>Trocar por um aparelho novo</h2><p class="muted" style="margin-top:-4px">Você já pagou <b>${pagas} de ${ps.length} parcelas</b> em dia. Por isso pode trocar o ${esc((ap.marca||'')+' '+(ap.modelo||''))} por um modelo novo: o aparelho atual entra como parte da entrada e a loja monta um novo plano.</p>
+    <label>Qual aparelho você quer? (opcional)<input id="upModelo" maxlength="80" placeholder="ex.: Samsung A56, iPhone 15"></label>
+    <label>Como está o seu aparelho atual?<select id="upEstado"><option>Perfeito, sem marcas</option><option>Bom, com marcas de uso</option><option>Tela ou traseira trincada</option><option>Com defeito</option></select></label>
+    <p class="small muted">Sem compromisso: a loja avalia, faz a proposta e você decide.</p>
+    <div class="erro" id="upMsg"></div><button class="btn pri full" id="upBtn">Quero a proposta</button>`);
+  $('#upBtn').onclick=async()=>{ $('#upBtn').disabled=true;
+    const d={tipo:'UPGRADE',token:tk,vendaId:ap.vendaId||'',vendaNumero:ap.vendaNumero||0,lojaId:ap.lojaId||'',lojaNome:ap.lojaNome||'',clienteNome:ap.clienteNome||'',marca:ap.marca||'',modelo:ap.modelo||'',imei:ap.imei||'',
+      descricao:`Quer trocar por: ${$('#upModelo').value.trim()||'a combinar'} · aparelho atual: ${$('#upEstado').value} · pagou ${pagas} de ${ps.length} parcelas em dia`,status:'ABERTO',criadoEm:Date.now()};
+    try{ const id=await DB.add('pedidos',d); const l=pedLocais(tk); l[id]={tipo:'UPGRADE',status:'ABERTO',criadoEm:d.criadoEm}; try{ localStorage.setItem('nxc_ped_'+tk,JSON.stringify(l)); }catch(e){}
+      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>A loja vai avaliar e chamar você no WhatsApp com a proposta.</p></div>${zapLoja(ap)}`); telaContratos();
+    }catch(e){ console.error(e); $('#upMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#upBtn').disabled=false; } };
+}
 async function formAcordo(tk){
   const ap=S.aps[tk], h=hoje(), at=(ap.parcelas||[]).filter(p=>!p.pago&&p.venc<h), tot=at.reduce((s,p)=>s+valorHoje(p,ap).valor,0);
   openModal(`<h2>Fazer acordo do atraso</h2><p class="muted" style="margin-top:-4px">Você tem <b>${at.length} parcela(s) em atraso</b>, total de <b>${brl(tot)}</b> hoje.</p>
@@ -906,6 +934,7 @@ document.addEventListener('click',e=>{
   const pm=e.target.closest('[data-promessa]'); if(pm){ formPromessa(pm.dataset.promessa); return; }
   const cn=e.target.closest('[data-carne]'); if(cn){ carne(cn.dataset.carne); return; }
   const ac=e.target.closest('[data-acordo]'); if(ac){ formAcordo(ac.dataset.acordo); return; }
+  const up=e.target.closest('[data-upgrade]'); if(up){ formUpgrade(up.dataset.upgrade); return; }
   const rc=e.target.closest('[data-recibo]'); if(rc){ recibo(rc.dataset.recibo,+rc.dataset.n); return; }
   const pa=e.target.closest('[data-pixauto]'); if(pa){ ativarPixAutomatico(pa.dataset.pixauto); return; }
   const np=e.target.closest('[data-nps]'); if(np){ formNps(np.dataset.nps,+np.dataset.n); return; }
