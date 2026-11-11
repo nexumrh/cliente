@@ -216,6 +216,17 @@ async function entrar(){
     S.tokens=tokens; sessionStorage.setItem('nxc_cli',JSON.stringify(tokens)); await telaContratos();
   }catch(e){ console.error(e); msg.textContent='Não foi possível entrar agora. Verifique a internet e tente de novo.'; $('#lBtn').disabled=false; }
 }
+/* Pagar parcela de outra pessoa: compartilha o PIX copia-e-cola da parcela, que qualquer um pode pagar. */
+function pagarPorOutro(tk,n,valor){
+  const ap=S.aps[tk]; let cod=''; try{ cod=brcode(ap,+valor,`NXC${ap.vendaNumero}P${n}`)||''; }catch(e){}
+  let qr=''; try{ if(cod){ const q=qrcode(0,'M'); q.addData(cod); q.make(); qr=q.createSvgTag({cellSize:4,margin:2,scalable:true}); } }catch(e){}
+  const msg=`Oi! Pode me ajudar a pagar a parcela ${n} do meu celular (${ap.marca||''} ${ap.modelo||''}) na ${ap.lojaNome||'NexumCell'}? É ${brl(valor)} no PIX. Copia e cola o código:\n\n${cod}`;
+  openModal(`<h2>Alguém vai pagar por você</h2><p class="muted" style="margin-top:-4px">Parcela ${n} · <b>${brl(valor)}</b></p>
+    ${qr?`<div style="width:190px;margin:8px auto;background:#fff;padding:8px;border-radius:12px">${qr}</div>`:''}
+    <p class="small">Mande o código PIX abaixo para quem vai pagar (pai, mãe, patrão…). Qualquer pessoa paga por este código, de qualquer banco, e cai na sua parcela.</p>
+    ${cod?`<div class="pixcode" style="word-break:break-all;font-family:monospace;font-size:12px;background:var(--card2,#f2f4f8);padding:10px;border-radius:8px">${cod}</div>
+    <div class="row mt" style="gap:6px"><button class="btn sm" data-copy="${encodeURIComponent(cod)}">Copiar código</button><a class="btn sm green" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Enviar no WhatsApp</a></div>`:'<p class="erro">Não foi possível gerar o PIX desta parcela. Fale com a loja.</p>'}</div>`);
+}
 async function telaContratos(){
   $('#sair').hidden=false;
   const aps=(await Promise.all(S.tokens.map(tk=>DB.get('aparelhos',tk).catch(()=>null)))).filter(Boolean);
@@ -248,7 +259,8 @@ function cardContrato(ap){
     ${prox&&!encerrado?`<div class="aviso ${hp.tipo==='atraso'?'bad':'warn'}" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
         <div>${hp.tipo==='atraso'?`<b>Parcela ${prox.n} atrasada há ${hp.dias} dia(s)</b><br>Com multa e juros:`:hp.tipo==='hoje'?`<b>Parcela ${prox.n} vence hoje</b>`:`<b>Próxima: parcela ${prox.n} — vence ${fmtD(prox.venc)}</b><br>Pagando antes do vencimento: ${Number(ap.descontoPct)||0}% de desconto`}</div>
         <div style="text-align:right"><b style="font-size:20px">${brl(hp.valor)}</b></div></div>
-      <button class="btn gold full" style="margin-top:10px" data-pagar="${tk}" data-n="${prox.n}" data-v="${hp.valor}">Pagar parcela ${prox.n} com PIX</button>`:''}
+      <button class="btn gold full" style="margin-top:10px" data-pagar="${tk}" data-n="${prox.n}" data-v="${hp.valor}">Pagar parcela ${prox.n} com PIX</button>
+      <button class="btn full" style="margin-top:6px" data-outrem="${tk}" data-n="${prox.n}" data-v="${hp.valor}">Pedir para alguém pagar por você</button>`:''}
     <h3>Faturas</h3>
     <div>${ps.map(p=>{ const h=valorHoje(p,ap);
       return `<div class="parc"><div><b>Parcela ${p.n}/${ps.length}</b><br><span class="small muted">vence ${fmtD(p.venc)}</span></div>
@@ -768,6 +780,8 @@ $('#lang').onclick=()=>{ LANG=LANG==='es'?'pt':'es'; try{ localStorage.setItem('
 
 /* ---------- eventos e início ---------- */
 document.addEventListener('click',e=>{
+  const cp=e.target.closest('[data-copy]'); if(cp){ try{ navigator.clipboard.writeText(decodeURIComponent(cp.dataset.copy)); toast('Código copiado','ok'); }catch(err){} return; }
+  const op=e.target.closest('[data-outrem]'); if(op){ pagarPorOutro(op.dataset.outrem,+op.dataset.n,+op.dataset.v); return; }
   const p=e.target.closest('[data-pagar]'); if(p){ const n=+p.dataset.n; pagar(p.dataset.pagar,n,+p.dataset.v,n>0?`Parcela ${n} · contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`:`Quitação do contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`); return; }
   const r=e.target.closest('[data-roubo]'); if(r){ formRoubo(r.dataset.roubo); return; }
   const pd=e.target.closest('[data-pedido]'); if(pd){ formPedido(pd.dataset.pedido,pd.dataset.tipo); return; }
