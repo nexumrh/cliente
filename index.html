@@ -10,6 +10,7 @@
 <script src="nexumcell-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <style>
+[hidden]{display:none!important}
 :root{--ink:#0A1733;--ink2:#13244D;--bg:#F4F4F8;--card:#fff;--line:#E2E1EC;--txt:#1B1A2E;--mut:#696784;--pri:#1A5CFF;--pri-s:#E8F0FF;--gold:#E2B33B;
   --ok:#0E8A5F;--ok-s:#E3F4EC;--warn:#A86A12;--warn-s:#FBF1DF;--bad:#C23B3B;--bad-s:#FBE7E7;--f:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
 *,*::before,*::after{box-sizing:border-box}
@@ -498,47 +499,124 @@ async function telaRemota(tk){
   $('#sair').hidden=true;
   const vit=await DB.get('publico','vitrine').catch(()=>null); S.preServ=DEMO?'':String(vit?.servidor||'').replace(/\/$/,'');
   let info={numero:'—',loja:vit?.empresa||'',vendedor:''};
-  if(S.preServ){ try{ info=await apiRemota({acao:'ver',token:tk}); }catch(e){ $('#app').innerHTML=`<div class="card center"><h2>Link indisponível</h2><p class="muted">${esc(e.message)}</p></div>`; return; } }
-  if(info.enviado){ $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Documentos já enviados</h2><p class="muted">A ${esc(info.loja||'loja')} está analisando e vai chamar você no WhatsApp.</p></div>`; return; }
-  const F={};
-  const caixa=(k,t,dica,cam)=>`<div class="card" style="margin-top:10px"><b>${t}</b><p class="small muted" style="margin:4px 0 8px">${dica}</p><div id="prev_${k}"></div>
-    <label class="btn full" style="text-align:center;cursor:pointer">📷 ${cam?'Tirar selfie':'Tirar foto'}<input type="file" accept="image/*" ${cam?'capture="user"':'capture="environment"'} data-ft="${k}" hidden></label></div>`;
-  $('#app').innerHTML=`<div class="hero"><small>${esc(info.loja||'')}${info.vendedor?' · '+esc(info.vendedor):''}</small><b style="font-size:22px">Análise de crédito pelo celular</b><span style="color:#C9D4EE">Proposta nº ${esc(String(info.numero))} · leva uns 3 minutos</span></div>
-    <form id="fRem">
-    ${caixa('frente','1. Documento — frente','RG, CNH ou a nova identidade. Tire da mesa, com boa luz, sem reflexo e com o documento inteiro na foto.')}
-    ${caixa('verso','2. Documento — verso','Se for CNH, pode pular.')}
-    ${caixa('selfie','3. Selfie','Rosto inteiro, sem óculos escuros nem boné, em lugar claro.',true)}
-    <div class="card"><b>4. Seus dados</b>
-      <label>Nome completo<input id="rNome" required maxlength="120" autocomplete="name"></label>
-      <div class="row" style="gap:10px"><label style="flex:1">CPF<input id="rCpf" inputmode="numeric" required></label><label style="flex:1">Nascimento<input id="rNasc" type="date" required></label></div>
-      <div class="row" style="gap:10px"><label style="flex:1">RG<input id="rRg" maxlength="30"></label><label style="flex:1">Documento<select id="rDoc"><option>RG</option><option value="CIN">Nova identidade</option><option>CNH</option></select></label></div>
-      <label>Nome completo da mãe<input id="rMae" required maxlength="120"></label>
-      <div class="row" style="gap:10px"><label style="flex:1">WhatsApp<input id="rTel" inputmode="tel" required></label><label style="flex:1">Outro telefone (recado)<input id="rTel2" inputmode="tel"></label></div>
-      <label>E-mail<input id="rEmail" type="email" maxlength="120"></label>
-      <div class="row" style="gap:10px"><label style="flex:1">CEP<input id="rCep" inputmode="numeric" maxlength="9"></label><label style="flex:2">Endereço e número<input id="rEnd" required maxlength="160"></label></div>
-      <div class="row" style="gap:10px"><label style="flex:1">Bairro<input id="rBairro" required maxlength="80"></label><label style="flex:1">Cidade<input id="rCid" required maxlength="60"></label><label style="width:70px">UF<input id="rUf" maxlength="2" value="PR"></label></div>
-      <div class="row" style="gap:10px"><label style="flex:1">Renda mensal (R$)<input id="rRenda" type="number" min="0" step="0.01" required></label><label style="flex:1">Profissão<input id="rProf" required maxlength="80"></label></div>
-      <label class="check"><input type="checkbox" id="rOk"> <span>Declaro que os dados são verdadeiros e autorizo a ${esc(info.loja||'loja')} a usar meus dados, documento e selfie para análise de crédito e contato (LGPD).</span></label>
-      <div class="erro" id="rMsg"></div><button class="btn gold full" id="rBtn">Enviar para análise</button></div></form>`;
-  document.querySelectorAll('[data-ft]').forEach(inp=>inp.addEventListener('change',async()=>{ const k=inp.dataset.ft, f=inp.files[0]; if(!f) return;
-    try{ F[k]=await fotoReduzida(f); $('#prev_'+k).innerHTML=`<img src="${F[k]}" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-bottom:8px">`; }catch(e){ toast('Não foi possível ler a foto. Tente de novo.','err'); } }));
-  $('#rCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
-  $('#rCep').addEventListener('change',async e=>{ const c=onlyDig(e.target.value); if(c.length!==8) return; try{ const r=await (await fetch(`https://viacep.com.br/ws/${c}/json/`)).json(); if(r.erro) return; if(!$('#rEnd').value) $('#rEnd').value=r.logradouro?r.logradouro+', ':''; $('#rBairro').value=r.bairro||$('#rBairro').value; $('#rCid').value=r.localidade||$('#rCid').value; $('#rUf').value=r.uf||$('#rUf').value; }catch(_){} });
-  $('#fRem').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('#rMsg'); m.textContent='';
-    const dados={nome:$('#rNome').value.trim(),cpf:onlyDig($('#rCpf').value),nasc:$('#rNasc').value,rg:$('#rRg').value.trim(),docTipo:$('#rDoc').value,mae:$('#rMae').value.trim(),telefone:onlyDig($('#rTel').value),telefone2:onlyDig($('#rTel2').value),
-      email:$('#rEmail').value.trim(),cep:onlyDig($('#rCep').value),endereco:$('#rEnd').value.trim(),bairro:$('#rBairro').value.trim(),cidade:$('#rCid').value.trim(),uf:$('#rUf').value.trim(),renda:+$('#rRenda').value||0,profissao:$('#rProf').value.trim()};
-    if(!F.frente) return m.textContent='Tire a foto da frente do documento.';
-    if(dados.docTipo!=='CNH'&&!F.verso) return m.textContent='Tire a foto do verso do documento.';
-    if(!F.selfie) return m.textContent='Tire a selfie.';
-    if(!cpfOk(dados.cpf)) return m.textContent='CPF inválido.';
-    const idade=dados.nasc?Math.floor((Date.now()-new Date(dados.nasc))/31557600000):0; if(idade<18) return m.textContent='É preciso ter 18 anos ou mais.';
-    if(dados.telefone.length<10) return m.textContent='WhatsApp com DDD.';
-    if(!$('#rOk').checked) return m.textContent='Marque a autorização para continuar.';
-    $('#rBtn').disabled=true; $('#rBtn').textContent='Enviando…';
+  const fim=(tit,txt,ok)=>{ $('#app').innerHTML=`<div class="card center"><div class="ic ${ok?'ok':'bad'}">${svg(ok?'<path d="M20 6 9 17l-5-5"/>':'<path d="M18 6 6 18M6 6l12 12"/>')}</div><h2>${tit}</h2><p class="muted">${txt}</p></div>`; };
+  if(S.preServ){ try{ info=await apiRemota({acao:'ver',token:tk}); }catch(e){ return fim('Link indisponível',esc(e.message)); } }
+  if(info.enviado) return fim('Documentos já enviados',`A ${esc(info.loja||'loja')} está analisando e vai chamar você no WhatsApp.`,true);
+  if(!$('#rmCss')) document.head.insertAdjacentHTML('beforeend',`<style id="rmCss">
+    .rm-top{background:linear-gradient(135deg,var(--ink),var(--ink2));color:#fff;border-radius:16px;padding:18px 20px;margin-top:6px}
+    .rm-top small{color:#9FB6E8;font-size:12px;letter-spacing:.04em}.rm-top b{display:block;font-size:20px;margin:2px 0}.rm-top span{color:#C9D4EE;font-size:13px}
+    .rm-bar{display:flex;gap:5px;margin-top:14px}.rm-bar i{flex:1;height:5px;border-radius:9px;background:rgba(255,255,255,.2)}.rm-bar i.on{background:#5B8CFF}.rm-bar i.ok{background:#3DDC97}
+    .rm-h{display:flex;align-items:center;gap:12px;margin-bottom:6px}.rm-n{width:34px;height:34px;border-radius:50%;background:var(--pri-s);color:var(--pri);font-weight:700;display:grid;place-items:center;flex:none}.rm-h h2{margin:0;font-size:19px}
+    .rm-list{list-style:none;padding:0;margin:12px 0 4px}.rm-list li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.rm-list li:first-child{border-top:0}.rm-list .e{font-size:22px;line-height:1.1}.rm-list b{display:block}.rm-list span{color:var(--mut);font-size:13.5px}
+    .rm-seg{display:flex;align-items:center;gap:10px;background:#F1F8F4;border:1px solid #CFE8DA;border-radius:12px;padding:11px 14px;font-size:13px;color:#24553C;margin-top:12px}
+    .rm-chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}.rm-chips button{font:inherit;font-weight:600;font-size:14px;padding:9px 14px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--txt);cursor:pointer}.rm-chips button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+    .rm-foto{border:2px dashed #C9CFE2;border-radius:14px;padding:14px;margin-top:12px;text-align:center;background:#FAFBFE}.rm-foto.ok{border-style:solid;border-color:#3DDC97;background:#F3FCF7}
+    .rm-foto .ph{height:120px;border-radius:10px;background:#EEF1F8;display:grid;place-items:center;color:#9AA3BC;margin-bottom:10px}.rm-foto img{width:100%;max-height:240px;object-fit:contain;border-radius:10px;margin-bottom:10px;background:#000}
+    .rm-foto b{display:block}.rm-foto .d{color:var(--mut);font-size:13px;margin:2px 0 10px}
+    .rm-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rm-g .w2{grid-column:1/-1}@media(max-width:420px){.rm-g{grid-template-columns:1fr}}
+    .rm-nav{display:flex;gap:10px;margin-top:16px}.rm-nav .btn{flex:1}.rm-nav .v{flex:0 0 auto}
+    .rm-res{font-size:14px}.rm-res div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line)}.rm-res div:first-child{border-top:0}.rm-res span{color:var(--mut)}.rm-res b{text-align:right}
+    .rm-cam{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4;max-width:340px;margin:12px auto 0}.rm-cam video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}.rm-cam .ov{position:absolute;inset:10% 16% 16%;border:3px dashed rgba(255,255,255,.85);border-radius:50%;box-shadow:0 0 0 999px rgba(10,23,51,.38)}
+  </style>`);
+  const PAR=['Mãe','Pai','Cônjuge / companheiro(a)','Filho(a)','Irmão / irmã','Avô / avó','Tio(a)','Primo(a)','Sogro(a)','Cunhado(a)','Amigo(a)','Vizinho(a)','Colega de trabalho','Outro'];
+  const DOCS=[['RG','RG'],['CIN','Nova identidade (CIN)'],['CNH','CNH'],['RNE','RNE (estrangeiro)']];
+  const F={}, D={docTipo:'RG',digital:false,uf:'PR'}; let passo=0, stream=null;
+  const PASSOS=['Documento','Selfie','Seus dados','Contato','Renda e envio'];
+  const pararCam=()=>{ try{ stream&&stream.getTracks().forEach(t=>t.stop()); }catch(e){} stream=null; };
+  const fone=t=>{ t=onlyDig(t).slice(0,11); return t.length>10?t.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'):t.replace(/(\d{2})(\d{0,4})(\d{0,4})/,(m,a,b,c)=>`(${a}) ${b}${c?'-'+c:''}`); };
+  const v=(id,val='')=>`value="${esc(D[id]??val)}"`;
+  const precisaVerso=()=>D.digital||D.docTipo!=='CNH';
+  const foto=(k,t,d,cam)=>`<div class="rm-foto ${F[k]?'ok':''}">${F[k]?`<img src="${F[k]}" alt="">`:`<div class="ph">${svg(cam?'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>':'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16h6"/>')}</div>`}
+    <b>${t}${F[k]?' ✓':''}</b><div class="d">${d}</div>
+    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap"><label class="btn ${F[k]?'':'pri'} sm" style="cursor:pointer">📷 ${F[k]?'Tirar outra':(D.digital&&!cam?'Fotografar a tela':'Tirar foto')}<input type="file" accept="image/*" capture="${cam?'user':'environment'}" data-ft="${k}" hidden></label>
+      ${cam?'':`<label class="btn sm" style="cursor:pointer">${D.digital?'Enviar print':'Enviar da galeria'}<input type="file" accept="image/*" data-ft="${k}" hidden></label>`}</div></div>`;
+  const topo=()=>`<div class="rm-top"><small>${esc(info.loja||'')}${info.vendedor?' · atendimento de '+esc(info.vendedor):''}</small><b>Análise de crédito pelo celular</b><span>Proposta nº ${esc(String(info.numero))}${passo?` · passo ${passo} de ${PASSOS.length}: ${PASSOS[passo-1]}`:''}</span>
+    <div class="rm-bar">${PASSOS.map((_,i)=>`<i class="${i+1<passo?'ok':i+1===passo?'on':''}"></i>`).join('')}</div></div>`;
+  const nav=(prox='Continuar')=>`<div class="erro" id="rMsg" style="margin-top:10px"></div><div class="rm-nav">${passo>1?'<button type="button" class="btn v" id="rVoltar">Voltar</button>':''}<button type="button" class="btn pri" id="rProx">${prox}</button></div>`;
+  const cab=(t,d)=>`<div class="rm-h"><div class="rm-n">${passo}</div><h2>${t}</h2></div><p class="muted" style="margin:0 0 4px">${d}</p>`;
+  const TELAS=[
+    ()=>`<div class="card"><h2 style="margin-top:0">Olá! Vamos fazer sua análise de crédito</h2><p class="muted" style="margin-top:-2px">Você faz tudo pelo celular, sem ir à loja. Leva uns <b>3 minutos</b>.</p>
+      <ul class="rm-list"><li><span class="e">🪪</span><div><b>Documento com foto</b><span>RG, nova identidade (CIN), CNH ou RNE. Vale também o documento digital do app gov.br.</span></div></li>
+        <li><span class="e">🤳</span><div><b>Uma selfie</b><span>Em lugar claro, sem óculos escuros e sem boné.</span></div></li>
+        <li><span class="e">📝</span><div><b>Seus dados</b><span>Endereço, telefone, uma pessoa de referência e sua renda.</span></div></li>
+        <li><span class="e">💬</span><div><b>Resposta pelo WhatsApp</b><span>A loja analisa e chama você em poucos minutos.</span></div></li></ul>
+      <div class="rm-seg">🔒 <span>Seus dados são enviados com conexão segura e usados só para esta análise de crédito, conforme a LGPD.</span></div>
+      <button type="button" class="btn pri full" id="rProx" style="margin-top:16px">Começar</button></div>`,
+    ()=>`<div class="card">${cab('Documento','Escolha o documento e fotografe. A foto precisa mostrar o documento inteiro e dar para ler.')}
+      <div class="rm-chips">${DOCS.map(([k,n])=>`<button type="button" class="${D.docTipo===k?'on':''}" data-doc="${k}">${n}</button>`).join('')}</div>
+      <label class="check" style="margin-top:8px"><input type="checkbox" id="rDig" ${D.digital?'checked':''}> <span>Meu documento é <b>digital</b> (app gov.br ou CNH Digital)</span></label>
+      ${D.digital?`<p class="small muted" style="margin:6px 0 0">Abra o documento no aplicativo oficial e envie o print da tela com os dados e o print da tela com o QR Code.</p>`:''}
+      ${foto('frente',D.digital?'Tela com os dados':'Frente do documento',D.digital?'Print inteiro, sem cortar.':'Sobre a mesa, com boa luz, sem reflexo e sem o dedo na frente.')}
+      ${precisaVerso()?foto('verso',D.digital?'Tela com o QR Code':'Verso do documento',D.digital?'É a tela que mostra o QR Code do documento.':'Vire o documento e fotografe o outro lado.'):''}
+      ${nav()}</div>`,
+    ()=>`<div class="card">${cab('Selfie','Precisamos conferir que é você mesmo. Fique em lugar claro, sem óculos escuros nem boné, e centralize o rosto.')}
+      ${F.selfie?`<div class="rm-foto ok"><img src="${F.selfie}" alt=""><b>Selfie ✓</b><div class="d">Ficou boa? Se não, tire outra.</div><button type="button" class="btn sm" id="rSelfieDeNovo">📷 Tirar outra</button></div>`
+        :`<div class="rm-cam" id="rCam"><video id="rVid" playsinline autoplay muted></video><div class="ov"></div></div>
+          <div class="row" style="gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" id="rFoto">📷 Tirar selfie</button><label class="btn" id="rAlt" style="cursor:pointer" hidden>Abrir a câmera do celular<input type="file" accept="image/*" capture="user" data-ft="selfie" hidden></label></div>`}
+      ${nav()}</div>`,
+    ()=>`<div class="card">${cab('Seus dados','Preencha igual está no documento.')}
+      <div class="rm-g"><label class="w2">Nome completo<input id="nome" ${v('nome')} maxlength="120" autocomplete="name"></label>
+        <label>CPF<input id="cpf" ${v('cpf')} inputmode="numeric" placeholder="000.000.000-00"></label><label>Data de nascimento<input id="nasc" type="date" ${v('nasc')}></label>
+        <label>${D.docTipo==='RNE'?'Nº do RNE / RNM':D.docTipo==='CNH'?'Nº de registro da CNH':'RG'}<input id="rg" ${v('rg')} maxlength="30"></label>
+        ${D.docTipo==='RNE'?`<label>Nacionalidade<input id="nacionalidade" ${v('nacionalidade')} maxlength="40"></label>`:'<span></span>'}
+        <label class="w2">Nome completo da mãe<input id="mae" ${v('mae')} maxlength="120"></label></div>${nav()}</div>`,
+    ()=>`<div class="card">${cab('Contato e endereço','A loja confirma os dados pelo WhatsApp e com uma pessoa de referência.')}
+      <div class="rm-g"><label>Seu WhatsApp<input id="telefone" ${v('telefone')} inputmode="tel" placeholder="(45) 99999-9999" data-fone></label><label>E-mail (opcional)<input id="email" type="email" ${v('email')} maxlength="120"></label></div>
+      <h3 style="margin:16px 0 2px;font-size:15px">Pessoa de referência</h3><p class="small muted" style="margin:0 0 8px">Alguém que conhece você e atende o telefone: parente, amigo ou colega.</p>
+      <div class="rm-g"><label>Telefone<input id="telefone2" ${v('telefone2')} inputmode="tel" placeholder="(45) 99999-9999" data-fone></label><label>Nome<input id="ref1Nome" ${v('ref1Nome')} maxlength="80"></label>
+        <label class="w2">O que essa pessoa é sua?<select id="ref1Par"><option value="">Selecione…</option>${PAR.map(x=>`<option ${D.ref1Par===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
+      <h3 style="margin:16px 0 8px;font-size:15px">Endereço</h3>
+      <div class="rm-g"><label>CEP<input id="cep" ${v('cep')} inputmode="numeric" maxlength="9" placeholder="00000-000"></label><label>Bairro<input id="bairro" ${v('bairro')} maxlength="80"></label>
+        <label class="w2">Rua e número<input id="endereco" ${v('endereco')} maxlength="160"></label>
+        <label>Cidade<input id="cidade" ${v('cidade')} maxlength="60"></label><label>UF<input id="uf" ${v('uf')} maxlength="2" style="text-transform:uppercase"></label></div>${nav()}</div>`,
+    ()=>`<div class="card">${cab('Renda e envio','Falta pouco. Informe sua renda e confira antes de enviar.')}
+      <div class="rm-g"><label>Renda mensal (R$)<input id="renda" type="number" min="0" step="0.01" ${v('renda')} inputmode="decimal"></label><label>Profissão<input id="profissao" ${v('profissao')} maxlength="80"></label></div>
+      <h3 style="margin:16px 0 4px;font-size:15px">Confira</h3>
+      <div class="rm-res"><div><span>Nome</span><b>${esc(D.nome||'')}</b></div><div><span>CPF</span><b>${esc(D.cpf||'')}</b></div><div><span>Documento</span><b>${esc((DOCS.find(x=>x[0]===D.docTipo)||[])[1]||'')}${D.digital?' digital':''} ✓ · selfie ✓</b></div>
+        <div><span>WhatsApp</span><b>${esc(D.telefone||'')}</b></div><div><span>Referência</span><b>${esc(D.ref1Nome||'')} (${esc(D.ref1Par||'')})</b></div><div><span>Endereço</span><b>${esc([D.endereco,D.bairro,D.cidade].filter(Boolean).join(', '))}${D.uf?'/'+esc(D.uf):''}</b></div></div>
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="rOk" ${D.ok?'checked':''}> <span>Declaro que os dados são verdadeiros e autorizo a ${esc(info.loja||'loja')} a usar meus dados, documento e selfie para análise de crédito e contato (LGPD).</span></label>
+      ${nav('Enviar para análise')}</div>`];
+  const guardar=()=>document.querySelectorAll('#app input[id]:not([type=checkbox]):not([type=file]),#app select[id]').forEach(i=>{ D[i.id]=i.value.trim(); });
+  const validar=()=>{
+    if(passo===1){ if(!F.frente) return D.digital?'Envie a tela com os dados do documento.':'Tire a foto da frente do documento.'; if(precisaVerso()&&!F.verso) return D.digital?'Envie a tela com o QR Code.':'Tire a foto do verso do documento.'; }
+    if(passo===2&&!F.selfie) return 'Tire a selfie para continuar.';
+    if(passo===3){ if((D.nome||'').split(/\s+/).length<2) return 'Informe o nome completo.'; if(!cpfOk(onlyDig(D.cpf))) return 'CPF inválido. Confira os números.';
+      const idade=D.nasc?Math.floor((Date.now()-new Date(D.nasc))/31557600000):0; if(!D.nasc) return 'Informe a data de nascimento.'; if(idade<18) return 'É preciso ter 18 anos ou mais.'; if(idade>110) return 'Confira a data de nascimento.';
+      if(D.docTipo==='RNE'&&!D.rg) return 'Informe o número do RNE / RNM.'; if((D.mae||'').split(/\s+/).length<2) return 'Informe o nome completo da mãe.'; }
+    if(passo===4){ const t1=onlyDig(D.telefone), t2=onlyDig(D.telefone2); if(t1.length<10) return 'Informe seu WhatsApp com DDD.'; if(t2.length<10) return 'Informe o telefone da pessoa de referência, com DDD.'; if(t1===t2) return 'O telefone da referência precisa ser de outra pessoa.';
+      if((D.ref1Nome||'').length<2||!D.ref1Par) return 'Informe o nome da referência e o que ela é sua.'; if(D.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(D.email)) return 'E-mail inválido.';
+      if(!D.endereco||!D.bairro||!D.cidade) return 'Preencha rua e número, bairro e cidade.'; }
+    if(passo===5){ if(!(+D.renda>0)) return 'Informe sua renda mensal.'; if(!D.profissao) return 'Informe sua profissão.'; if(!$('#rOk').checked) return 'Marque a autorização para continuar.'; }
+    return ''; };
+  const enviar=async()=>{ const b=$('#rProx'), m=$('#rMsg'); b.disabled=true; b.innerHTML='<span class="spin"></span> Enviando…';
+    const dados={nome:D.nome,cpf:onlyDig(D.cpf),nasc:D.nasc,rg:D.rg||'',docTipo:D.docTipo,docDigital:!!D.digital,nacionalidade:D.nacionalidade||'',mae:D.mae,telefone:onlyDig(D.telefone),telefone2:onlyDig(D.telefone2),ref1Nome:D.ref1Nome,ref1Par:D.ref1Par,
+      email:D.email||'',cep:onlyDig(D.cep),endereco:D.endereco,bairro:D.bairro,cidade:D.cidade,uf:(D.uf||'').toUpperCase(),renda:+D.renda||0,profissao:D.profissao};
     try{ if(S.preServ) await apiRemota({acao:'enviar',token:tk,dados,frente:F.frente,verso:F.verso||'',selfie:F.selfie,aceite:true});
-      $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Enviado para análise!</h2><p>A ${esc(info.loja||'loja')} recebeu seus documentos. A resposta sai em poucos minutos e o vendedor chama você no WhatsApp.</p><p class="small muted">Proposta nº ${esc(String(info.numero))}${DEMO?' · demonstração (nada foi enviado)':''}</p></div>`;
-    }catch(err){ m.textContent=err.doServidor?err.message:'Não foi possível enviar agora. Verifique a internet e tente de novo.'; $('#rBtn').disabled=false; $('#rBtn').textContent='Enviar para análise'; }
-  });
+      $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Enviado para análise!</h2><p>A ${esc(info.loja||'loja')} recebeu seus documentos.</p>
+        <ul class="rm-list" style="text-align:left"><li><span class="e">⏱️</span><div><b>Resposta em poucos minutos</b><span>A análise começa agora.</span></div></li><li><span class="e">💬</span><div><b>Fique de olho no WhatsApp</b><span>${info.vendedor?esc(info.vendedor)+' chama':'O vendedor chama'} você no número ${esc(D.telefone)}.</span></div></li></ul>
+        <p class="small muted">Proposta nº ${esc(String(info.numero))}${DEMO?' · demonstração (nada foi enviado)':''}. Pode fechar esta página.</p></div>`;
+    }catch(err){ m.textContent=err.doServidor?err.message:'Não foi possível enviar agora. Verifique a internet e tente de novo.'; b.disabled=false; b.textContent='Enviar para análise'; } };
+  const des=()=>{ pararCam(); $('#app').innerHTML=topo()+TELAS[passo](); window.scrollTo({top:0,behavior:'smooth'});
+    $('#rProx')?.addEventListener('click',()=>{ guardar(); if(passo===5) D.ok=$('#rOk').checked; const e=passo?validar():''; if(e){ $('#rMsg').textContent=e; return; } if(passo===5) return enviar(); passo++; des(); });
+    $('#rVoltar')?.addEventListener('click',()=>{ guardar(); passo--; des(); });
+    document.querySelectorAll('[data-doc]').forEach(b=>b.onclick=()=>{ if(D.docTipo!==b.dataset.doc){ D.docTipo=b.dataset.doc; delete F.frente; delete F.verso; } des(); });
+    $('#rDig')?.addEventListener('change',e=>{ D.digital=e.target.checked; delete F.frente; delete F.verso; des(); });
+    document.querySelectorAll('[data-ft]').forEach(inp=>inp.addEventListener('change',async()=>{ const k=inp.dataset.ft, f=inp.files[0]; if(!f) return;
+      try{ F[k]=await fotoReduzida(f); guardar(); des(); }catch(e){ toast('Não foi possível ler a foto. Tente de novo.','err'); } }));
+    document.querySelectorAll('[data-fone]').forEach(i=>i.addEventListener('input',()=>{ i.value=fone(i.value); }));
+    $('#cpf')?.addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
+    $('#cep')?.addEventListener('input',async e=>{ const c=onlyDig(e.target.value).slice(0,8); e.target.value=c.replace(/(\d{5})(\d)/,'$1-$2'); if(c.length!==8) return;
+      try{ const r=await (await fetch(`https://viacep.com.br/ws/${c}/json/`)).json(); if(r.erro) return; if(!$('#endereco').value) $('#endereco').value=r.logradouro?r.logradouro+', ':''; if(r.bairro) $('#bairro').value=r.bairro; if(r.localidade) $('#cidade').value=r.localidade; if(r.uf) $('#uf').value=r.uf; }catch(_){} });
+    $('#rSelfieDeNovo')?.addEventListener('click',()=>{ delete F.selfie; des(); });
+    if(passo===2&&!F.selfie){ const vid=$('#rVid');
+      navigator.mediaDevices?.getUserMedia({video:{facingMode:'user',width:{ideal:1280}},audio:false}).then(s=>{ if(passo!==2||!$('#rVid')){ s.getTracks().forEach(t=>t.stop()); return; } stream=s; vid.srcObject=s; })
+        .catch(()=>{ $('#rCam').hidden=true; $('#rFoto').hidden=true; $('#rAlt').hidden=false; });
+      if(!navigator.mediaDevices){ $('#rCam').hidden=true; $('#rFoto').hidden=true; $('#rAlt').hidden=false; }
+      $('#rFoto').onclick=()=>{ if(!vid.videoWidth) return $('#rMsg').textContent='A câmera ainda não está pronta. Aguarde um instante.';
+        const k=Math.min(1,900/Math.max(vid.videoWidth,vid.videoHeight)), cv=document.createElement('canvas'); cv.width=Math.round(vid.videoWidth*k); cv.height=Math.round(vid.videoHeight*k);
+        const x=cv.getContext('2d'); x.translate(cv.width,0); x.scale(-1,1); x.drawImage(vid,0,0,cv.width,cv.height); F.selfie=cv.toDataURL('image/jpeg',0.82); des(); }; }
+  };
+  des();
 }
 /* ---------- PIX Automático (Asaas) ---------- */
 async function ativarPixAutomatico(tk){
