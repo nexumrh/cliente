@@ -53,7 +53,7 @@ canvas.sig{width:100%;height:180px;border:2px dashed #B9C6E4;border-radius:12px;
 #toast div.err{background:var(--bad)}#toast div.ok{background:var(--ok)}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--pri-s);border-top-color:var(--pri);border-radius:50%;animation:g .8s linear infinite;vertical-align:-3px}
 @keyframes g{to{transform:rotate(360deg)}}
-.center{text-align:center}.ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px}.ic svg{width:32px;height:32px}
+.center{text-align:center}svg.ico{width:17px;height:17px;vertical-align:-3px;flex:none}.btn:has(>svg.ico){display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}.ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px}.ic svg{width:32px;height:32px}
 .ic.ok{background:var(--ok-s);color:var(--ok)}.ic.bad{background:var(--bad-s);color:var(--bad)}
 a{color:var(--pri)}
 .nps{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.nps button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer}
@@ -90,6 +90,8 @@ const fmtD = s => s ? String(s).split('-').reverse().join('/') : '—';
 function fmtDT(ms){ if(!ms) return '—'; const d=new Date(ms); return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function diasEntre(a,b){ const pa=a.split('-').map(Number), pb=b.split('-').map(Number); return Math.round((Date.UTC(pb[0],pb[1]-1,pb[2])-Date.UTC(pa[0],pa[1]-1,pa[2]))/86400000); }
 function cpfOk(c){ c=onlyDig(c); if(c.length!==11||/^(\d)\1+$/.test(c)) return false; for(let t=9;t<11;t++){ let s=0; for(let i=0;i<t;i++) s+=+c[i]*(t+1-i); if(((s*10)%11)%10!==+c[t]) return false; } return true; }
+const RMI={'doc': '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16h6"/>', 'face': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', 'dados': '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>', 'chat': '<path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.3A8 8 0 1 1 21 12z"/>', 'lock': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 'cam': '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>', 'clock': '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'fone': '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'};
+const rmI = k => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${RMI[k]}</svg>`;
 const svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 function toast(t,k=''){ const d=document.createElement('div'); d.className=k; d.textContent=t; $('#toast').appendChild(d); setTimeout(()=>d.remove(),4200); }
 function openModal(html){ $('#mbody').innerHTML=html; $('#modal').hidden=false; }
@@ -283,7 +285,7 @@ function cardContrato(ap){
       ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'?`<button class="btn sm gold" data-acordo="${tk}">Fazer acordo do atraso</button>`:''}
       ${!encerrado&&!roubo&&hp&&hp.tipo==='atraso'&&!ap.promessaApp&&(ap.promessaMaxDias??5)>0&&(DEMO||servCli(ap))?`<button class="btn sm gold" data-promessa="${tk}">Prometer o pagamento</button>`:''}
       ${ap.protecao&&!encerrado&&!roubo?`<button class="btn sm" data-pedido="${tk}" data-tipo="PROTECAO">Usar minha Proteção</button>`:''}
-      ${podeUpgrade(ap)&&!encerrado?`<button class="btn sm gold" data-upgrade="${tk}">📱 Trocar por um aparelho novo</button>`:''}
+      ${podeUpgrade(ap)&&!encerrado?`<button class="btn sm gold" data-upgrade="${tk}">${rmI('fone')} Trocar por um aparelho novo</button>`:''}
       ${!encerrado?`<button class="btn sm" data-pedido="${tk}" data-tipo="DADOS">Atualizar telefone ou endereço</button>`:''}
       ${abertas.length?`<button class="btn sm" data-carne="${tk}">Baixar carnê</button>`:''}
       ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
@@ -480,7 +482,7 @@ async function telaInstalar(tk){
       <p class="small muted" style="margin:10px 0 0">Depois de instalar, toque em <b>Abrir</b>: o app se liga sozinho a este contrato.</p></div>
     <div class="card"><b>2. Ativar</b><p class="small muted" style="margin:4px 0 10px">Com o app instalado, volte nesta página e toque em Ativar. O app abre já ligado ao seu contrato.</p>
       <a class="btn green full" href="${ativar}">✓ Ativar o NexumCell</a>
-      <p class="small muted" style="margin:10px 0 0">Não abriu? Abra o app NexumCell, toque em <b>📷 Ler QR code da loja</b> e leia o QR na tela do vendedor.</p></div>
+      <p class="small muted" style="margin:10px 0 0">Não abriu? Abra o app NexumCell, toque em <b>Ler QR code da loja</b> e leia o QR na tela do vendedor.</p></div>
     <div class="card"><b>3. Liberar as permissões</b><p class="small muted" style="margin:4px 0 0">No app, toque em cada botão na ordem (proteção, sobrepor a outros apps, bateria) e aceite. Pronto: o vendedor vê a confirmação na tela dele.</p></div>
     <p class="small muted center" style="margin-top:14px">O app protege o aparelho do crediário. Ao quitar, a proteção é removida e você pode desinstalar.</p>`;
   // o app lê a área de transferência ao abrir: já ativa o contrato sem precisar ler o QR de novo
@@ -508,7 +510,7 @@ async function telaRemota(tk){
     .rm-top small{color:#9FB6E8;font-size:12px;letter-spacing:.04em}.rm-top b{display:block;font-size:20px;margin:2px 0}.rm-top span{color:#C9D4EE;font-size:13px}
     .rm-bar{display:flex;gap:5px;margin-top:14px}.rm-bar i{flex:1;height:5px;border-radius:9px;background:rgba(255,255,255,.2)}.rm-bar i.on{background:#5B8CFF}.rm-bar i.ok{background:#3DDC97}
     .rm-h{display:flex;align-items:center;gap:12px;margin-bottom:6px}.rm-n{width:34px;height:34px;border-radius:50%;background:var(--pri-s);color:var(--pri);font-weight:700;display:grid;place-items:center;flex:none}.rm-h h2{margin:0;font-size:19px}
-    .rm-list{list-style:none;padding:0;margin:12px 0 4px}.rm-list li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.rm-list li:first-child{border-top:0}.rm-list .e{font-size:22px;line-height:1.1}.rm-list b{display:block}.rm-list span{color:var(--mut);font-size:13.5px}
+    .rm-list{list-style:none;padding:0;margin:12px 0 4px}.rm-list li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.rm-list li:first-child{border-top:0}.rm-list .e{width:38px;height:38px;border-radius:10px;background:var(--pri-s);color:var(--pri);display:grid;place-items:center;flex:none}.rm-list .e svg{width:20px;height:20px}.rm-foto .ph svg{width:44px;height:44px}.rm-list b{display:block}.rm-list span{color:var(--mut);font-size:13.5px}
     .rm-seg{display:flex;align-items:center;gap:10px;background:#F1F8F4;border:1px solid #CFE8DA;border-radius:12px;padding:11px 14px;font-size:13px;color:#24553C;margin-top:12px}
     .rm-chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}.rm-chips button{font:inherit;font-weight:600;font-size:14px;padding:9px 14px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--txt);cursor:pointer}.rm-chips button.on{background:var(--ink);border-color:var(--ink);color:#fff}
     .rm-foto{border:2px dashed #C9CFE2;border-radius:14px;padding:14px;margin-top:12px;text-align:center;background:#FAFBFE}.rm-foto.ok{border-style:solid;border-color:#3DDC97;background:#F3FCF7}
@@ -529,7 +531,7 @@ async function telaRemota(tk){
   const precisaVerso=()=>D.digital||D.docTipo!=='CNH';
   const foto=(k,t,d,cam)=>`<div class="rm-foto ${F[k]?'ok':''}">${F[k]?`<img src="${F[k]}" alt="">`:`<div class="ph">${svg(cam?'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>':'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16h6"/>')}</div>`}
     <b>${t}${F[k]?' ✓':''}</b><div class="d">${d}</div>
-    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap"><label class="btn ${F[k]?'':'pri'} sm" style="cursor:pointer">📷 ${F[k]?'Tirar outra':(D.digital&&!cam?'Fotografar a tela':'Tirar foto')}<input type="file" accept="image/*" capture="${cam?'user':'environment'}" data-ft="${k}" hidden></label>
+    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap"><label class="btn ${F[k]?'':'pri'} sm" style="cursor:pointer">${rmI('cam')} ${F[k]?'Tirar outra':(D.digital&&!cam?'Fotografar a tela':'Tirar foto')}<input type="file" accept="image/*" capture="${cam?'user':'environment'}" data-ft="${k}" hidden></label>
       ${cam?'':`<label class="btn sm" style="cursor:pointer">${D.digital?'Enviar print':'Enviar da galeria'}<input type="file" accept="image/*" data-ft="${k}" hidden></label>`}</div></div>`;
   const topo=()=>`<div class="rm-top"><small>${esc(info.loja||'')}${info.vendedor?' · atendimento de '+esc(info.vendedor):''}</small><b>Análise de crédito pelo celular</b><span>Proposta nº ${esc(String(info.numero))}${passo?` · passo ${passo} de ${PASSOS.length}: ${PASSOS[passo-1]}`:''}</span>
     <div class="rm-bar">${PASSOS.map((_,i)=>`<i class="${i+1<passo?'ok':i+1===passo?'on':''}"></i>`).join('')}</div></div>`;
@@ -537,11 +539,11 @@ async function telaRemota(tk){
   const cab=(t,d)=>`<div class="rm-h"><div class="rm-n">${passo}</div><h2>${t}</h2></div><p class="muted" style="margin:0 0 4px">${d}</p>`;
   const TELAS=[
     ()=>`<div class="card"><h2 style="margin-top:0">Olá! Vamos fazer sua análise de crédito</h2><p class="muted" style="margin-top:-2px">Você faz tudo pelo celular, sem ir à loja. Leva uns <b>3 minutos</b>.</p>
-      <ul class="rm-list"><li><span class="e">🪪</span><div><b>Documento com foto</b><span>RG, nova identidade (CIN), CNH ou RNE. Vale também o documento digital do app gov.br.</span></div></li>
-        <li><span class="e">🤳</span><div><b>Uma selfie</b><span>Em lugar claro, sem óculos escuros e sem boné.</span></div></li>
-        <li><span class="e">📝</span><div><b>Seus dados</b><span>Endereço, telefone, uma pessoa de referência e sua renda.</span></div></li>
-        <li><span class="e">💬</span><div><b>Resposta pelo WhatsApp</b><span>A loja analisa e chama você em poucos minutos.</span></div></li></ul>
-      <div class="rm-seg">🔒 <span>Seus dados são enviados com conexão segura e usados só para esta análise de crédito, conforme a LGPD.</span></div>
+      <ul class="rm-list"><li><span class="e">${rmI('doc')}</span><div><b>Documento com foto</b><span>RG, nova identidade (CIN), CNH ou RNE. Vale também o documento digital do app gov.br.</span></div></li>
+        <li><span class="e">${rmI('face')}</span><div><b>Uma selfie</b><span>Em lugar claro, sem óculos escuros e sem boné.</span></div></li>
+        <li><span class="e">${rmI('dados')}</span><div><b>Seus dados</b><span>Endereço, telefone, uma pessoa de referência e sua renda.</span></div></li>
+        <li><span class="e">${rmI('chat')}</span><div><b>Resposta pelo WhatsApp</b><span>A loja analisa e chama você em poucos minutos.</span></div></li></ul>
+      <div class="rm-seg">${rmI('lock')} <span>Seus dados são enviados com conexão segura e usados só para esta análise de crédito, conforme a LGPD.</span></div>
       <button type="button" class="btn pri full" id="rProx" style="margin-top:16px">Começar</button></div>`,
     ()=>`<div class="card">${cab('Documento','Escolha o documento e fotografe. A foto precisa mostrar o documento inteiro e dar para ler.')}
       <div class="rm-chips">${DOCS.map(([k,n])=>`<button type="button" class="${D.docTipo===k?'on':''}" data-doc="${k}">${n}</button>`).join('')}</div>
@@ -551,10 +553,10 @@ async function telaRemota(tk){
       ${precisaVerso()?foto('verso',D.digital?'Tela com o QR Code':'Verso do documento',D.digital?'É a tela que mostra o QR Code do documento.':'Vire o documento e fotografe o outro lado.'):''}
       ${nav()}</div>`,
     ()=>`<div class="card">${cab('Selfie','Precisamos conferir que é você mesmo. Fique em lugar claro, sem óculos escuros nem boné, e centralize o rosto.')}
-      ${F.selfie?`<div class="rm-foto ok"><img src="${F.selfie}" alt=""><b>Selfie ✓</b><div class="d">Ficou boa? Se não, tire outra.</div><button type="button" class="btn sm" id="rSelfieDeNovo">📷 Tirar outra</button></div>`
+      ${F.selfie?`<div class="rm-foto ok"><img src="${F.selfie}" alt=""><b>Selfie ✓</b><div class="d">Ficou boa? Se não, tire outra.</div><button type="button" class="btn sm" id="rSelfieDeNovo">${rmI('cam')} Tirar outra</button></div>`
         :`<div class="rm-cam" id="rCam"><video id="rVid" playsinline autoplay muted></video><div class="ov"></div><div id="rPasso" style="position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:19px;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.75)"></div></div>
           <p class="small muted" style="text-align:center;margin:8px 0 0">Ao tocar no botão, siga as 3 instruções: olhar, virar o rosto e sorrir.</p>
-          <div class="row" style="gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" id="rFoto">📷 Tirar selfie</button><label class="btn" id="rAlt" style="cursor:pointer" hidden>Abrir a câmera do celular<input type="file" accept="image/*" capture="user" data-ft="selfie" hidden></label></div>`}
+          <div class="row" style="gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" id="rFoto">${rmI('cam')} Tirar selfie</button><label class="btn" id="rAlt" style="cursor:pointer" hidden>Abrir a câmera do celular<input type="file" accept="image/*" capture="user" data-ft="selfie" hidden></label></div>`}
       ${nav()}</div>`,
     ()=>`<div class="card">${cab('Seus dados','Preencha igual está no documento.')}
       <div class="rm-g"><label class="w2">Nome completo<input id="nome" ${v('nome')} maxlength="120" autocomplete="name"></label>
@@ -595,7 +597,7 @@ async function telaRemota(tk){
       email:D.email||'',cep:onlyDig(D.cep),endereco:D.endereco,bairro:D.bairro,cidade:D.cidade,uf:(D.uf||'').toUpperCase(),renda:+D.renda||0,profissao:D.profissao};
     try{ if(S.preServ) await apiRemota({acao:'enviar',token:tk,dados,frente:F.frente,verso:F.verso||'',selfie:F.selfie,mosaico:F.mosaico||'',vidaMov:D.vidaMov??null,aceite:true});
       $('#app').innerHTML=`<div class="card center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Enviado para análise!</h2><p>A ${esc(info.loja||'loja')} recebeu seus documentos.</p>
-        <ul class="rm-list" style="text-align:left"><li><span class="e">⏱️</span><div><b>Resposta em poucos minutos</b><span>A análise começa agora.</span></div></li><li><span class="e">💬</span><div><b>Fique de olho no WhatsApp</b><span>${info.vendedor?esc(info.vendedor)+' chama':'O vendedor chama'} você no número ${esc(D.telefone)}.</span></div></li></ul>
+        <ul class="rm-list" style="text-align:left"><li><span class="e">${rmI('clock')}</span><div><b>Resposta em poucos minutos</b><span>A análise começa agora.</span></div></li><li><span class="e">${rmI('chat')}</span><div><b>Fique de olho no WhatsApp</b><span>${info.vendedor?esc(info.vendedor)+' chama':'O vendedor chama'} você no número ${esc(D.telefone)}.</span></div></li></ul>
         <p class="small muted">Proposta nº ${esc(String(info.numero))}${DEMO?' · demonstração (nada foi enviado)':''}. Pode fechar esta página.</p></div>`;
     }catch(err){ m.textContent=err.doServidor?err.message:'Não foi possível enviar agora. Verifique a internet e tente de novo.'; b.disabled=false; b.textContent='Enviar para análise'; } };
   const des=()=>{ pararCam(); $('#app').innerHTML=topo()+TELAS[passo](); window.scrollTo({top:0,behavior:'smooth'});
@@ -620,7 +622,7 @@ async function telaRemota(tk){
         const quadro=()=>{ const k=Math.min(1,900/Math.max(vid.videoWidth,vid.videoHeight)), cv=document.createElement('canvas'); cv.width=Math.round(vid.videoWidth*k); cv.height=Math.round(vid.videoHeight*k); const x=cv.getContext('2d'); x.translate(cv.width,0); x.scale(-1,1); x.drawImage(vid,0,0,cv.width,cv.height); return cv; };
         const cinza=cv=>{ const W=64,H=48,t=document.createElement('canvas'); t.width=W; t.height=H; t.getContext('2d').drawImage(cv,cv.width*0.25,cv.height*0.1,cv.width*0.5,cv.height*0.8,0,0,W,H); const d=t.getContext('2d').getImageData(0,0,W,H).data,o=[]; for(let i=0;i<d.length;i+=4) o.push((d[i]+d[i+1]+d[i+2])/3); return o; };
         const dif=(a,b)=>{ const x=cinza(a),y=cinza(b); let s=0; for(let i=0;i<x.length;i++) s+=Math.abs(x[i]-y[i]); return s/x.length; };
-        const qs=[]; for(const tx of ['Olhe para a câmera','Vire o rosto devagar para o lado','Agora sorria 🙂']){ ps.textContent=tx; await new Promise(o=>setTimeout(o,1700)); if(!$('#rVid')) return; qs.push(quadro()); }
+        const qs=[]; for(const tx of ['Olhe para a câmera','Vire o rosto devagar para o lado','Agora sorria']){ ps.textContent=tx; await new Promise(o=>setTimeout(o,1700)); if(!$('#rVid')) return; qs.push(quadro()); }
         ps.textContent=''; const mov=Math.max(dif(qs[0],qs[1]),dif(qs[0],qs[2]));
         if(mov<=4){ $('#rMsg').textContent='O rosto não se mexeu. Toque de novo e siga as instruções que aparecem na tela.'; bt.disabled=false; return; }
         const h=220, ws=qs.map(q=>Math.round(q.width*h/q.height)), m=document.createElement('canvas'); m.width=ws.reduce((a,b)=>a+b,0); m.height=h; const mx=m.getContext('2d'); let px=0; qs.forEach((q,i)=>{ mx.drawImage(q,px,0,ws[i],h); px+=ws[i]; });
@@ -793,7 +795,7 @@ async function telaBio(tk){
       <div style="position:absolute;inset:12% 18% 18%;border:3px dashed rgba(255,255,255,.85);border-radius:50%;box-shadow:0 0 0 999px rgba(10,23,51,.35)"></div>
       <div id="bPasso" style="position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:20px;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.7)"></div></div>
     <button class="btn pri full" id="bIr" style="margin-top:14px">Começar</button>
-    <label class="btn full" id="bAlt" style="margin-top:10px;text-align:center;cursor:pointer" hidden>📷 Abrir a câmera do celular<input type="file" accept="image/*" capture="user" id="bArq" hidden></label>
+    <label class="btn full" id="bAlt" style="margin-top:10px;text-align:center;cursor:pointer" hidden>${rmI('cam')} Abrir a câmera do celular<input type="file" accept="image/*" capture="user" id="bArq" hidden></label>
     <p class="small" id="bMsg" style="color:#c0392b;text-align:center;min-height:18px"></p></div>`;
   const vid=$('#bVid'), msg=$('#bMsg'); let stream=null;
   const parar=()=>{ try{ stream&&stream.getTracks().forEach(t=>t.stop()); }catch(e){} };
@@ -808,7 +810,7 @@ async function telaBio(tk){
     }catch(e){ msg.style.color='#c0392b'; msg.textContent='Não foi possível enviar. Verifique a internet e tente de novo.'; $('#bIr').disabled=false; } };
   $('#bIr').onclick=async()=>{ if(!vid.videoWidth) return msg.textContent='A câmera ainda não está pronta.';
     $('#bIr').disabled=true; msg.textContent=''; const qs=[];
-    for(const p of ['Olhe para a câmera','Vire o rosto devagar para o lado','Agora sorria 🙂']){ $('#bPasso').textContent=p; await new Promise(o=>setTimeout(o,1700)); qs.push(quadro()); }
+    for(const p of ['Olhe para a câmera','Vire o rosto devagar para o lado','Agora sorria']){ $('#bPasso').textContent=p; await new Promise(o=>setTimeout(o,1700)); qs.push(quadro()); }
     $('#bPasso').textContent='';
     const mov=Math.max(dif(qs[0],qs[1]),dif(qs[0],qs[2]));
     if(mov<=4){ msg.textContent='O rosto não se mexeu. Toque em Começar e siga as instruções na tela.'; $('#bIr').disabled=false; return; }
