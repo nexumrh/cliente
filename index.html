@@ -821,6 +821,50 @@ async function telaBio(tk){
     const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; c.getContext('2d').drawImage(img,0,0); enviar(menor(c,900,0.82),'',null); }; img.src=URL.createObjectURL(f); };
 }
 
+/* ---------- vídeo de declaração (venda de iPhone) gravado no celular ---------- */
+async function telaVideo(tk){
+  const sair=$('#sair'); if(sair) sair.hidden=true;
+  const tela=(tit,txt,ok)=>{ $('#app').innerHTML=`<div class="card center"><div class="ic ${ok?'ok':'bad'}">${svg(ok?'<path d="M20 6 9 17l-5-5"/>':'<path d="M18 6 6 18M6 6l12 12"/>')}</div><h2>${tit}</h2><p class="muted">${txt}</p></div>`; };
+  const b=DEMO?{status:'PENDENTE',expiraEm:Date.now()+9e5,empresa:'Loja demonstração',roteiro:'Eu, Maria, estou na loja comprando um iPhone.',maxS:20}:await DB.get('videosQr',tk).catch(()=>null);
+  if(!b) return tela('QR Code inválido','Peça para o vendedor gerar um novo QR Code.');
+  if(b.status!=='PENDENTE') return tela('Vídeo já enviado','Pode voltar para o atendimento na loja.',true);
+  if(Date.now()>b.expiraEm) return tela('QR Code vencido','Peça para o vendedor gerar um novo QR Code.');
+  const maxS=+b.maxS||20;
+  $('#app').innerHTML=`<div class="card"><h2>Vídeo de confirmação da compra</h2><p class="muted">${esc(b.empresa||'')} · Segure o celular na altura do rosto, num lugar claro, e leia o texto em voz alta.</p>
+    <div style="background:#0A1733;color:#E6ECFA;border-radius:14px;padding:14px;font-size:16px;line-height:1.5;margin:10px 0">“${esc(b.roteiro||'')}”</div>
+    <div style="position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;max-width:420px;margin:0 auto">
+      <video id="vCam" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)"></video>
+      <video id="vPrev" playsinline controls hidden style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <div id="vRec" hidden style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);color:#fff;border-radius:99px;padding:4px 12px;font-weight:700">● <span>0s</span></div></div>
+    <button class="btn pri full" id="vIr" style="margin-top:14px">Gravar</button>
+    <button class="btn full" id="vEnv" style="margin-top:10px" hidden>Enviar vídeo</button>
+    <p class="small" id="vMsg" style="color:#c0392b;text-align:center;min-height:18px"></p></div>`;
+  const cam=$('#vCam'), msg=$('#vMsg'); let st=null, vid=null;
+  try{ st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:true}); cam.srcObject=st; }
+  catch(e){ msg.textContent='Libere a câmera e o microfone para gravar o vídeo.'; $('#vIr').disabled=true; return; }
+  const tipo=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
+  if(!tipo){ msg.textContent='Este celular não grava vídeo pelo navegador. Grave no computador da loja.'; $('#vIr').disabled=true; return; }
+  let rec=null;
+  $('#vIr').onclick=()=>{
+    if(rec&&rec.state==='recording'){ rec.stop(); return; }
+    const partes=[], t0=Date.now(); rec=new MediaRecorder(st,{mimeType:tipo,videoBitsPerSecond:170000,audioBitsPerSecond:32000});
+    $('#vRec').hidden=false; $('#vPrev').hidden=true; cam.hidden=false; $('#vEnv').hidden=true; $('#vIr').textContent='Parar'; msg.textContent='';
+    const tk2=setInterval(()=>{ const s=Math.floor((Date.now()-t0)/1000); $('#vRec span').textContent=s+'s / '+maxS+'s'; if(s>=maxS&&rec.state==='recording') rec.stop(); },250);
+    rec.ondataavailable=e=>e.data.size&&partes.push(e.data);
+    rec.onstop=()=>{ clearInterval(tk2); $('#vRec').hidden=true; $('#vIr').textContent='Gravar de novo';
+      const dur=Math.round((Date.now()-t0)/100)/10, blob=new Blob(partes,{type:tipo.split(';')[0]});
+      if(dur<5){ msg.textContent='Ficou muito curto: leia o texto inteiro.'; return; }
+      if(blob.size>720000){ msg.textContent='O vídeo ficou grande demais. Grave de novo, um pouco mais curto.'; return; }
+      const r=new FileReader(); r.onload=()=>{ vid={video:r.result,mime:blob.type,dur,tam:blob.size}; const p=$('#vPrev'); p.src=URL.createObjectURL(blob); p.hidden=false; cam.hidden=true; $('#vEnv').hidden=false; msg.style.color=''; msg.textContent='Assista e, se estiver bom, toque em Enviar.'; }; r.readAsDataURL(blob); };
+    rec.start(500);
+  };
+  $('#vEnv').onclick=async()=>{ if(!vid) return; $('#vEnv').disabled=true; msg.textContent='Enviando…';
+    try{ if(!DEMO) await DB.set('videosQr',tk,{status:'ENVIADA',...vid,enviadaEm:Date.now(),dispositivo:navigator.userAgent.slice(0,180)});
+      try{ st.getTracks().forEach(t=>t.stop()); }catch(e){}
+      tela('Vídeo enviado!','Pronto. Pode voltar para o atendimento: o vídeo já apareceu na tela do vendedor.'+(DEMO?' (demonstração: nada foi enviado)':''),true);
+    }catch(e){ msg.style.color='#c0392b'; msg.textContent='Não foi possível enviar. Verifique a internet e tente de novo.'; $('#vEnv').disabled=false; } };
+}
+
 /* ---------- assinatura do contrato no celular do cliente ---------- */
 async function telaAssinar(tk){
   const a=await DB.get('assinaturas',tk).catch(()=>null);
@@ -954,6 +998,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   if(tk) return telaAssinar(tk);
   if(qs.has('pre')) return telaPre(qs.get('pre'));
   if(qs.get('bio')) return telaBio(qs.get('bio'));
+  if(qs.get('vid')) return telaVideo(qs.get('vid'));
   if(qs.get('remoto')) return telaRemota(qs.get('remoto'));
   if(qs.get('instalar')) return telaInstalar(qs.get('instalar'));
   if(qs.get('contrato')) return telaContrato(qs.get('contrato'));
