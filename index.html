@@ -178,15 +178,18 @@ async function pagar(tk,n,valor,descricao){
     try{ const r=await fetch(serv+'/api/pix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk,n})}); if(r.ok){ const j=await r.json(); if(j.copiaECola){ codigo=j.copiaECola; v=j.valor||valor; auto=true; } } }catch(e){}
   }
   if(!codigo) codigo=brcode(ap,valor,`NXC${ap.vendaNumero}${n>0?'P'+n:'Q'}`);
-  if(!codigo){ openModal('<h2>PIX indisponível</h2><p>A loja ainda não cadastrou a chave PIX. Fale com a loja pelo WhatsApp.</p>'+zapLoja(ap)); return; }
+  if(!codigo){ openModal('<h2>PIX indisponível</h2><p>A chave PIX ainda não foi cadastrada. Fale com o Suporte NexumCell pelo WhatsApp.</p>'+zapLoja(ap)); return; }
   let qr=''; try{ const q=qrcode(0,'M'); q.addData(codigo); q.make(); qr=q.createSvgTag({cellSize:4,margin:2,scalable:true}); }catch(e){}
   openModal(`<h2>Pagar com PIX</h2><p class="center" style="margin:0"><b style="font-size:26px">${brl(v)}</b><br><span class="muted">${esc(descricao)}</span></p>
     <div class="qr">${qr}</div><div class="cod" id="pixCod">${esc(codigo)}</div>
     <button class="btn pri full" style="margin-top:12px" id="copiarPix">Copiar código PIX</button>
-    <p class="small muted">${auto?'O pagamento é confirmado sozinho: em poucos minutos a fatura aparece como paga e o aparelho é liberado.':'Abra o app do seu banco, escolha PIX copia e cola e cole o código. Depois envie o comprovante para a loja.'}</p>`);
+    <p class="small muted">${auto?'O pagamento é confirmado sozinho: em poucos minutos a fatura aparece como paga e o aparelho é liberado.':'Abra o app do seu banco, escolha PIX copia e cola e cole o código. Depois envie o comprovante para o Suporte NexumCell.'}</p>`);
   $('#copiarPix').onclick=()=>navigator.clipboard?.writeText(codigo).then(()=>toast('Código copiado. Cole no app do banco.','ok'));
 }
-const zapLoja = ap => { const t=onlyDig(ap.lojaTelefone||ap.telefoneSuporte); return t?`<a class="btn green full" style="margin-top:10px" target="_blank" rel="noopener" href="https://wa.me/55${t}">Falar com a ${esc(ap.lojaNome||'loja')} no WhatsApp</a>`:''; };
+/* O cliente SEMPRE fala com o Suporte NexumCell (central), nunca com a loja parceira. */
+const NX_WHATS = ()=> onlyDig(window.NEXUMCELL_WHATS||'');
+const zapNexum = (ap, motivo='') => { const t=NX_WHATS(); if(!t) return ''; const nome=ap&&ap.clienteNome?' '+primeiroNome(ap.clienteNome):''; const msg=`Olá, Suporte NexumCell! Sou cliente${nome}. Contrato nº ${(ap&&ap.vendaNumero)||'—'}.${motivo?' Assunto: '+motivo+'.':''}`; return `<a class="btn green full" style="margin-top:10px" target="_blank" rel="noopener" href="https://wa.me/${t}?text=${encodeURIComponent(msg)}">💬 Falar com o Suporte NexumCell</a>`; };
+const zapLoja = ap => zapNexum(ap);
 
 /* ---------- telas ---------- */
 const S = {aps:{}, tokens:[], falhas:0};
@@ -199,7 +202,7 @@ function telaLogin(msg=''){
     <label>4 últimos dígitos do celular cadastrado na compra<input id="lTel" inputmode="numeric" maxlength="4" placeholder="0000" required></label>
     <div class="erro" id="lMsg">${esc(msg)}</div>
     <button class="btn pri full" id="lBtn">Entrar</button>
-    <p class="small muted">Seus dados não são mostrados para ninguém. Problemas para entrar? Fale com a loja onde você comprou.</p>
+    <p class="small muted">Seus dados não são mostrados para ninguém. Problemas para entrar? Fale com o Suporte NexumCell.</p>
   </form>
   <div class="card center"><b>Ainda não é cliente?</b><p class="muted" style="margin:4px 0 10px">Faça sua pré-análise de crédito pelo celular, sem compromisso.</p><a class="btn gold full" href="?pre${DEMO?'&demo':''}">Quero comprar um celular parcelado</a></div>`;
   $('#lCpf').addEventListener('input',e=>{ const d=onlyDig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
@@ -228,7 +231,7 @@ function pagarPorOutro(tk,n,valor){
     ${qr?`<div style="width:190px;margin:8px auto;background:#fff;padding:8px;border-radius:12px">${qr}</div>`:''}
     <p class="small">Mande o código PIX abaixo para quem vai pagar (pai, mãe, patrão…). Qualquer pessoa paga por este código, de qualquer banco, e cai na sua parcela.</p>
     ${cod?`<div class="pixcode" style="word-break:break-all;font-family:monospace;font-size:12px;background:var(--card2,#f2f4f8);padding:10px;border-radius:8px">${cod}</div>
-    <div class="row mt" style="gap:6px"><button class="btn sm" data-copy="${encodeURIComponent(cod)}">Copiar código</button><a class="btn sm green" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Enviar no WhatsApp</a></div>`:'<p class="erro">Não foi possível gerar o PIX desta parcela. Fale com a loja.</p>'}</div>`);
+    <div class="row mt" style="gap:6px"><button class="btn sm" data-copy="${encodeURIComponent(cod)}">Copiar código</button><a class="btn sm green" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Enviar no WhatsApp</a></div>`:'<p class="erro">Não foi possível gerar o PIX desta parcela. Fale com o Suporte NexumCell.</p>'}</div>`);
 }
 async function telaContratos(){
   $('#sair').hidden=false;
@@ -291,7 +294,7 @@ function cardContrato(ap){
       ${!encerrado&&!ap.vencAlterado?`<button class="btn sm" data-pedido="${tk}" data-tipo="VENCIMENTO">Mudar dia do vencimento</button>`:''}
       <button class="btn sm" data-pedido="${tk}" data-tipo="LGPD">Meus dados (LGPD)</button>
       <a class="btn sm" href="?contrato=${encodeURIComponent(tk)}${DEMO?'&demo':''}" target="_blank" rel="noopener">📄 Contrato assinado</a></div>
-    ${zapLoja(ap)}
+    <div class="aviso" style="margin-top:14px;background:#EEF3FF;border-color:#D4DEF5"><b>Suporte NexumCell</b><br><span class="small muted">Qualquer dúvida sobre o seu contrato, parcela ou aparelho é com a NexumCell, direto por aqui.</span>${zapNexum(ap)}</div>
   </div>`;
 }
 function guiaRoubo(tipo){
@@ -299,7 +302,7 @@ function guiaRoubo(tipo){
     <li>${tipo==='Roubo'?'Ligue <b>190</b> e registre o boletim de ocorrência na delegacia.':`Registre o boletim de ocorrência: <a target="_blank" rel="noopener" href="${LINKS.boFurto}">Delegacia Eletrônica do Paraná</a>.`}</li>
     <li>Bloqueie o celular, o chip e os apps de banco no <a target="_blank" rel="noopener" href="${LINKS.celularSeguro}">Celular Seguro</a> (conta gov.br).</li>
     <li>Peça à sua operadora o bloqueio da linha e um chip novo com o mesmo número.</li>
-    <li>Envie o número do boletim para a loja pelo WhatsApp.</li></ol>`;
+    <li>Envie o número do boletim para o Suporte NexumCell pelo WhatsApp.</li></ol>`;
 }
 function formRoubo(tk){
   const ap=S.aps[tk];
@@ -323,7 +326,7 @@ function formRoubo(tk){
       openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Comunicado recebido</h2><p>O aparelho será travado assim que se conectar à internet. A loja já foi avisada.</p></div>
         <div class="aviso warn"><b>Agora faça isto:</b>${guiaRoubo(roubo.tipo)}</div>${zapLoja(S.aps[tk])}`);
       telaContratos();
-    }catch(e){ console.error(e); $('#rMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#rBtn').disabled=false; }
+    }catch(e){ console.error(e); $('#rMsg').textContent='Não foi possível enviar. Tente de novo ou fale com o Suporte NexumCell.'; $('#rBtn').disabled=false; }
   };
 }
 
@@ -364,8 +367,8 @@ function respostaLocal(txt){
   if(/BLOQUE|TRAV|LIBER|DESBLOQ/.test(t)) return atr.length?`O aparelho é limitado ou bloqueado quando há parcela em atraso. Pague ${brl(soma)} e ele é liberado sozinho em poucos minutos (ou toque em “Já paguei — verificar” no celular). Na tela de bloqueio também existe a liberação de 24 h, uma vez por mês.`:'Seu contrato está em dia, então o aparelho não deve estar bloqueado. Se estiver, abra o NexumCell no celular e toque em “Já paguei — verificar” com a internet ligada.';
   if(/PONTO/.test(t)){ const pt=pontos(ap); return `Você tem ${pt.saldo} pontos (${brl(pt.reais)}). Use na loja como desconto em acessórios ou no próximo celular.`; }
   if(/ROUB|FURT|PERD/.test(t)) return 'Sinto muito! Toque em “Roubo, furto ou perda” no seu contrato: o aparelho é travado e mostramos o passo a passo do boletim e do bloqueio do IMEI.';
-  if(/DEFEIT|QUEBR|CONSERT|GARANT|TELA/.test(t)) return 'Toque em “Meu aparelho deu defeito” e descreva o problema. A loja responde por aqui e pelo WhatsApp.';
-  if(/ATENDENTE|PESSOA|HUMANO|LOJA|WHATS|FALAR/.test(t)) return `Claro! Fale com a ${ap.lojaNome||'loja'} pelo botão do WhatsApp no seu contrato${ap.lojaTelefone?' ou pelo número '+ap.lojaTelefone:''}.`;
+  if(/DEFEIT|QUEBR|CONSERT|GARANT|TELA/.test(t)) return 'Toque em “Meu aparelho deu defeito” e descreva o problema. O Suporte NexumCell responde por aqui e pelo WhatsApp.';
+  if(/ATENDENTE|PESSOA|HUMANO|LOJA|WHATS|FALAR/.test(t)){ const nx=NX_WHATS(), fmt=nx.replace(/^55(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3'); return `Claro! Toque no botão “Falar com o Suporte NexumCell” no seu contrato${nx?' ou chame no WhatsApp '+fmt:''}. O atendimento é sempre com a NexumCell.`; }
   return null;
 }
 async function perguntar(txt){
@@ -457,7 +460,7 @@ async function telaPre(id){
 async function telaContrato(tk){
   $('#sair').hidden=true;
   const c=await DB.get('contratos',tk).catch(()=>null);
-  if(!c?.html){ $('#app').innerHTML='<div class="card center"><h2>Contrato ainda não disponível</h2><p class="muted">A loja ainda não publicou a cópia do seu contrato. Fale com a loja pelo WhatsApp ou tente mais tarde.</p></div>'; return; }
+  if(!c?.html){ $('#app').innerHTML='<div class="card center"><h2>Contrato ainda não disponível</h2><p class="muted">A cópia do seu contrato ainda não foi publicada. Fale com o Suporte NexumCell pelo WhatsApp ou tente mais tarde.</p></div>'; return; }
   const semScript=c.html.replace(/<script[\s\S]*?<\/script>/gi,'');
   $('#app').innerHTML=`<div class="hero"><small>Contrato nº ${esc(String(c.numero||''))}</small><b style="font-size:22px">Seu contrato assinado</b><span style="color:#C9D4EE">${esc(c.clienteNome||'')} · assinado em ${c.assinadoEm?fmtDT(c.assinadoEm):'—'}</span></div>
     <div class="card"><button class="btn gold full" id="ctPdf">⬇ Baixar / salvar em PDF</button><p class="small muted" style="margin:8px 0 0">Na tela de impressão, escolha <b>Salvar como PDF</b>.</p></div>
@@ -642,7 +645,7 @@ async function ativarPixAutomatico(tk){
       <div class="qr">${qr}</div><div class="cod">${esc(j.copiaECola)}</div><button class="btn pri full" style="margin-top:12px" id="paCop">Copiar código PIX</button>
       <p class="small muted">No app do banco, confirme o pagamento e a autorização do PIX Automático. Em poucos minutos o portal mostra “débito automático ativo”.</p>`);
     $('#paCop').onclick=()=>navigator.clipboard?.writeText(j.copiaECola).then(()=>toast('Código copiado','ok'));
-  }catch(e){ openModal('<h2>Não foi possível agora</h2><p>Tente mais tarde ou fale com a loja.</p>'+zapLoja(ap)); }
+  }catch(e){ openModal('<h2>Não foi possível agora</h2><p>Tente mais tarde ou fale com o Suporte NexumCell.</p>'+zapLoja(ap)); }
 }
 
 /* ---------- nota do atendimento ---------- */
@@ -650,7 +653,7 @@ function formNps(tk,n){
   openModal(`<h2>Nota ${n}</h2><label>Quer contar o motivo? (opcional)<textarea id="npsTxt" rows="3" maxlength="400"></textarea></label><button class="btn pri full" style="margin-top:12px" id="npsOk">Enviar avaliação</button>`);
   $('#npsOk').onclick=async()=>{ const ap=S.aps[tk]; $('#npsOk').disabled=true;
     try{ await DB.set('avaliacoes',tk,{token:tk,vendaId:ap.vendaId||'',lojaId:ap.lojaId||'',nota:n,comentario:$('#npsTxt').value.trim(),em:Date.now()}); }catch(e){ console.error(e); }
-    try{ localStorage.setItem('nxc_nps_'+tk,'1'); }catch(e){} openModal('<div class="center"><div class="ic ok">'+svg('<path d="M20 6 9 17l-5-5"/>')+'</div><h2>Obrigado!</h2><p>Sua opinião ajuda a loja a melhorar.</p></div>'); telaContratos(); };
+    try{ localStorage.setItem('nxc_nps_'+tk,'1'); }catch(e){} openModal('<div class="center"><div class="ic ok">'+svg('<path d="M20 6 9 17l-5-5"/>')+'</div><h2>Obrigado!</h2><p>Sua opinião ajuda a NexumCell a melhorar.</p></div>'); telaContratos(); };
 }
 
 
@@ -660,7 +663,7 @@ function podeUpgrade(ap){ const ps=ap.parcelas||[], h=hoje(); if(ps.length<2||ap
   const pagas=ps.filter(p=>p.pago).length; return pagas<ps.length&&pagas>=Math.ceil(ps.length/2)&&!ps.some(p=>!p.pago&&p.venc<h); }
 function formUpgrade(tk){
   const ap=S.aps[tk], ps=ap.parcelas||[], pagas=ps.filter(p=>p.pago).length, ja=Object.values(pedLocais(tk)).some(x=>x.tipo==='UPGRADE'&&x.status==='ABERTO');
-  if(ja) return openModal(`<h2>Pedido já enviado</h2><p>A loja já recebeu seu pedido de troca e vai chamar você no WhatsApp.</p>${zapLoja(ap)}`);
+  if(ja) return openModal(`<h2>Pedido já enviado</h2><p>O Suporte NexumCell já recebeu seu pedido de troca e vai chamar você no WhatsApp.</p>${zapLoja(ap)}`);
   openModal(`<h2>Trocar por um aparelho novo</h2><p class="muted" style="margin-top:-4px">Você já pagou <b>${pagas} de ${ps.length} parcelas</b> em dia. Por isso pode trocar o ${esc((ap.marca||'')+' '+(ap.modelo||''))} por um modelo novo: o aparelho atual entra como parte da entrada e a loja monta um novo plano.</p>
     <label>Qual aparelho você quer? (opcional)<input id="upModelo" maxlength="80" placeholder="ex.: Samsung A56, iPhone 15"></label>
     <label>Como está o seu aparelho atual?<select id="upEstado"><option>Perfeito, sem marcas</option><option>Bom, com marcas de uso</option><option>Tela ou traseira trincada</option><option>Com defeito</option></select></label>
@@ -670,8 +673,8 @@ function formUpgrade(tk){
     const d={tipo:'UPGRADE',token:tk,vendaId:ap.vendaId||'',vendaNumero:ap.vendaNumero||0,lojaId:ap.lojaId||'',lojaNome:ap.lojaNome||'',clienteNome:ap.clienteNome||'',marca:ap.marca||'',modelo:ap.modelo||'',imei:ap.imei||'',
       descricao:`Quer trocar por: ${$('#upModelo').value.trim()||'a combinar'} · aparelho atual: ${$('#upEstado').value} · pagou ${pagas} de ${ps.length} parcelas em dia`,status:'ABERTO',criadoEm:Date.now()};
     try{ const id=await DB.add('pedidos',d); const l=pedLocais(tk); l[id]={tipo:'UPGRADE',status:'ABERTO',criadoEm:d.criadoEm}; try{ localStorage.setItem('nxc_ped_'+tk,JSON.stringify(l)); }catch(e){}
-      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>A loja vai avaliar e chamar você no WhatsApp com a proposta.</p></div>${zapLoja(ap)}`); telaContratos();
-    }catch(e){ console.error(e); $('#upMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#upBtn').disabled=false; } };
+      openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>O Suporte NexumCell vai avaliar e chamar você no WhatsApp com a proposta.</p></div>${zapLoja(ap)}`); telaContratos();
+    }catch(e){ console.error(e); $('#upMsg').textContent='Não foi possível enviar. Tente de novo ou fale com o Suporte NexumCell.'; $('#upBtn').disabled=false; } };
 }
 async function formAcordo(tk){
   const ap=S.aps[tk], h=hoje(), at=(ap.parcelas||[]).filter(p=>!p.pago&&p.venc<h), tot=at.reduce((s,p)=>s+valorHoje(p,ap).valor,0);
@@ -685,9 +688,9 @@ async function formAcordo(tk){
       const vit=await DB.get('publico','vitrine').catch(()=>null), sv=DEMO?'':String(vit?.servidor||'').replace(/\/$/,'');
       let r={ok:true,horas:0};
       if(sv){ const x=await fetch(sv+'/api/acordo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tk,parcelas:+$('#acN').value,obs:$('#acObs').value.trim()})}); r=await x.json().catch(()=>({})); if(!x.ok) throw Object.assign(new Error(r.erro||'Erro '+x.status),{srv:true}); }
-      else if(!DEMO) throw new Error('A loja ainda não ligou o acordo pelo portal. Fale com a loja pelo WhatsApp.');
+      else if(!DEMO) throw new Error('O acordo ainda não foi liberado pelo portal. Fale com o Suporte NexumCell pelo WhatsApp.');
       closeModal();
-      openModal(`<h2>Pedido enviado ✔</h2><p>A loja recebeu o seu pedido de acordo e vai falar com você pelo WhatsApp.</p>${r.horas?`<div class="aviso ok"><b>Seu aparelho foi liberado por ${r.horas} horas</b> enquanto a loja confirma o acordo.</div>`:''}<button class="btn pri full" onclick="closeModal()">Entendi</button>`);
+      openModal(`<h2>Pedido enviado ✔</h2><p>O Suporte NexumCell recebeu o seu pedido de acordo e vai falar com você pelo WhatsApp.</p>${r.horas?`<div class="aviso ok"><b>Seu aparelho foi liberado por ${r.horas} horas</b> enquanto o Suporte NexumCell confirma o acordo.</div>`:''}<button class="btn pri full" onclick="closeModal()">Entendi</button>`);
     }catch(e){ $('#acMsg').textContent=e.message; b.disabled=false; }
   };
 }
@@ -722,7 +725,7 @@ function formPedido(tk,tipo){
     <label>Endereço com número<input id="dEnd" maxlength="120"></label>
     <div class="row" style="gap:8px"><label style="flex:1">Bairro<input id="dBairro" maxlength="60"></label><label style="flex:1">Cidade<input id="dCid" maxlength="60"></label><label style="width:70px">UF<input id="dUf" maxlength="2"></label></div>
     <div class="erro" id="pdMsg"></div><button class="btn pri full" id="pdBtn">Enviar</button>`);
-  else openModal(`<h2>Meus dados (LGPD)</h2><p class="muted" style="margin-top:-4px">A Lei Geral de Proteção de Dados garante que você saiba quais dados seus a loja guarda.</p>
+  else openModal(`<h2>Meus dados (LGPD)</h2><p class="muted" style="margin-top:-4px">A Lei Geral de Proteção de Dados garante que você saiba quais dados seus a NexumCell guarda.</p>
     <label>O que você quer?<select id="pdTipo"><option value="LGPD_COPIA">Receber uma cópia dos meus dados</option><option value="LGPD_EXCLUSAO">Pedir a exclusão dos meus dados</option></select></label>
     <label>Observação (opcional)<textarea id="pdDesc" rows="2" maxlength="300"></textarea></label>
     <p class="small muted">Enquanto o contrato estiver ativo, os dados precisam ser mantidos para cumprir o contrato e a lei. Depois do encerramento, as fotos do documento e a biometria podem ser apagadas. A resposta chega em até 15 dias.</p>
@@ -742,7 +745,7 @@ function formPedido(tk,tipo){
     const d={tipo:t,token:tk,vendaId:ap.vendaId||'',vendaNumero:ap.vendaNumero||0,lojaId:ap.lojaId||'',lojaNome:ap.lojaNome||'',clienteNome:ap.clienteNome||'',marca:ap.marca||'',modelo:ap.modelo||'',imei:ap.imei||'',descricao:t==='DADOS'?'Atualização de telefone/endereço':t==='VENCIMENTO'?`Novo dia: ${$('#pdDia').value}${desc?' · '+desc:''}`:desc,status:'ABERTO',criadoEm:Date.now(),...(t==='VENCIMENTO'?{novoDia:+$('#pdDia').value}:{}),...(fotos.length?{fotos}:{}),...(dados?{dados}:{})};
     try{ const id=await DB.add('pedidos',d); const l=pedLocais(tk); l[id]={tipo:t,status:'ABERTO',criadoEm:d.criadoEm}; try{ localStorage.setItem('nxc_ped_'+tk,JSON.stringify(l)); }catch(e){}
       openModal(`<div class="center"><div class="ic ok">${svg('<path d="M20 6 9 17l-5-5"/>')}</div><h2>Pedido enviado</h2><p>${t==='DADOS'?'A loja vai ligar no número novo para confirmar e depois atualizar o seu cadastro.':`A loja já recebeu e vai responder por aqui${['ASSISTENCIA','PROTECAO'].includes(t)?' e pelo WhatsApp':''}.`}</p></div>${zapLoja(ap)}`); telaContratos();
-    }catch(e){ console.error(e); $('#pdMsg').textContent='Não foi possível enviar. Tente de novo ou fale com a loja.'; $('#pdBtn').disabled=false; }
+    }catch(e){ console.error(e); $('#pdMsg').textContent='Não foi possível enviar. Tente de novo ou fale com o Suporte NexumCell.'; $('#pdBtn').disabled=false; }
   };
 }
 
@@ -930,7 +933,7 @@ const ES=[
  ['Redes sociais e vídeos estão bloqueados.','Redes sociales y videos están bloqueados.'],
  ['Portal do cliente','Portal del cliente'],['Minhas faturas','Mis cuotas'],['Veja suas parcelas, pague com PIX e acompanhe seu contrato.','Vea sus cuotas, pague con PIX y siga su contrato.'],
  ['Data de nascimento','Fecha de nacimiento'],['4 últimos dígitos do celular cadastrado na compra','Últimos 4 dígitos del celular registrado en la compra'],['Entrar','Ingresar'],
- ['Seus dados não são mostrados para ninguém. Problemas para entrar? Fale com a loja onde você comprou.','Sus datos no se muestran a nadie. ¿Problemas para ingresar? Hable con la tienda donde compró.'],
+ ['Seus dados não são mostrados para ninguém. Problemas para entrar? Fale com o Suporte NexumCell.','Sus datos no se muestran a nadie. ¿Problemas para ingresar? Hable con el Soporte NexumCell.'],
  ['Ainda não é cliente?','¿Todavía no es cliente?'],['Faça sua pré-análise de crédito pelo celular, sem compromisso.','Haga su preanálisis de crédito por el celular, sin compromiso.'],['Quero comprar um celular parcelado','Quiero comprar un celular en cuotas'],
  ['Não encontramos contrato com esses dados. Confira e tente de novo.','No encontramos un contrato con esos datos. Verifique e intente de nuevo.'],['CPF inválido.','CPF inválido.'],
  ['Olá, ','¡Hola, '],['Seu contrato com a ','Su contrato con '],[' contratos con ',' contratos con '],['Contrato nº','Contrato n.º'],['Faturas em dia','Cuotas al día'],['fatura(s) em atraso','cuota(s) atrasada(s)'],
@@ -945,7 +948,7 @@ const ES=[
  ['Falar com a ','Hablar con '],[' no WhatsApp',' por WhatsApp'],['Baixar termo de quitação','Descargar constancia de pago total'],['Meus pedidos','Mis pedidos'],
  [' pontos',' puntos'],['Cada parcela paga em dia vale ','Cada cuota pagada a tiempo vale '],['. Troque na loja por desconto em acessórios ou no próximo celular.','. Cámbielos en la tienda por descuento en accesorios o en el próximo celular.'],
  ['Como foi o seu atendimento na compra?','¿Cómo fue la atención en su compra?'],['0 = muito ruim · 10 = excelente','0 = muy malo · 10 = excelente'],
- ['Pagar com PIX','Pagar con PIX'],['Copiar código PIX','Copiar código PIX'],['Abra o app do seu banco, escolha PIX copia e cola e cole o código. Depois envie o comprovante para a loja.','Abra la app de su banco, elija PIX copia y pega y pegue el código. Luego envíe el comprobante a la tienda.'],
+ ['Pagar com PIX','Pagar con PIX'],['Copiar código PIX','Copiar código PIX'],['Abra o app do seu banco, escolha PIX copia e cola e cole o código. Depois envie o comprovante para o Suporte NexumCell.','Abra la app de su banco, elija PIX copia y pega y pegue el código. Luego envíe el comprobante a la tienda.'],
  ['O pagamento é confirmado sozinho: em poucos minutos a fatura aparece como paga e o aparelho é liberado.','El pago se confirma solo: en pocos minutos la cuota aparece pagada y el equipo se libera.'],
  ['Comunicar roubo, furto ou perda','Denunciar robo, hurto o pérdida'],['O que aconteceu?','¿Qué pasó?'],['Quando?','¿Cuándo?'],['Onde? (bairro, cidade)','¿Dónde? (barrio, ciudad)'],['Número do boletim de ocorrência (se já tiver)','Número de denuncia policial (si ya la tiene)'],
  ['Conte o que aconteceu (opcional)','Cuente lo que pasó (opcional)'],['Comunicar e travar o aparelho','Denunciar y bloquear el equipo'],['Roubo','Robo'],['Furto','Hurto'],['Perda','Pérdida'],
