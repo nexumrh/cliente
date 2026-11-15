@@ -60,6 +60,39 @@ a{color:var(--pri)}
 .chat{max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
 .bolha{max-width:85%;padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.45}.bolha.ia{background:#F0F3FA;align-self:flex-start;border-bottom-left-radius:4px}.bolha.eu{background:var(--pri);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
 .chat-btn{position:fixed;right:16px;bottom:18px;z-index:15;background:var(--ink);color:#fff;border:0;border-radius:24px;padding:12px 18px;font:inherit;font-weight:600;box-shadow:0 8px 24px rgba(10,23,51,.3);cursor:pointer}
+/* ===== camada "nível banco" ===== */
+.bk-top{background:linear-gradient(160deg,#0B1E3F,#16305C);color:#fff;padding:18px 16px 24px;border-radius:0 0 22px 22px;margin:-18px -16px 0}
+.bk-hi{display:flex;justify-content:space-between;align-items:center}
+.bk-hi small{color:#AFBDD9;font-size:12.5px}.bk-hi b{font-size:17px;display:block}
+.bk-av{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;font-weight:700;font-size:14px}
+.bk-saldo{margin-top:16px}
+.bk-saldo small{color:#AFBDD9;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.bk-saldo .v{font-size:31px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
+.bk-saldo .sub{color:#C9D4EE;font-size:12.5px}
+.bk-prog{height:7px;background:rgba(255,255,255,.16);border-radius:6px;margin-top:11px;overflow:hidden}
+.bk-prog i{display:block;height:100%;background:#C8992F;border-radius:6px}
+.bk-progl{display:flex;justify-content:space-between;color:#C9D4EE;font-size:11.5px;margin-top:6px}
+.bk-body{padding-bottom:78px}
+.bk-sect{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:16px 2px 9px}
+.bk-atalhos{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.bk-atalho{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 3px;text-align:center;cursor:pointer}
+.bk-atalho .ic{width:36px;height:36px;border-radius:11px;background:#F1F4F9;display:grid;place-items:center;margin:0 auto 6px;color:#0B1E3F}
+.bk-atalho span{font-size:10.5px;font-weight:600;color:#38435C;line-height:1.2;display:block}
+.bk-mini{display:flex;gap:11px}
+.bk-mini .m{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.bk-mini small{color:var(--mut);font-size:11.5px}.bk-mini b{display:block;font-size:19px;margin-top:2px}
+.bk-ap{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:9px;cursor:pointer}
+.bk-ap .ap-ic{width:42px;height:42px;border-radius:12px;background:#F1F4F9;display:grid;place-items:center;color:#0B1E3F;flex:none}
+.bk-ex{display:flex;align-items:center;gap:11px;padding:12px 0;border-top:1px solid var(--line)}
+.bk-ex:first-child{border-top:0}
+.bk-ex .dot{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center}
+.bk-ex .t{flex:1}.bk-ex .t b{font-size:13.5px}.bk-ex .t span{color:var(--mut);font-size:12px;display:block}
+.bk-ex .amt{font-weight:700;font-size:13.5px;text-align:right}
+.bk-nav{position:fixed;bottom:0;left:0;right:0;max-width:640px;margin:0 auto;background:#fff;border-top:1px solid var(--line);display:flex;padding:7px 4px 9px;z-index:40}
+.bk-nav button{flex:1;border:0;background:transparent;font:inherit;color:var(--mut);font-size:10.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:3px 0}
+.bk-nav button.on{color:#0B1E3F}.bk-nav button.on .ic{color:#A97B23}
+.bk-voltar{background:none;border:0;color:#0B1E3F;font:inherit;font-weight:600;font-size:14px;cursor:pointer;padding:8px 0;display:flex;align-items:center;gap:6px}
+
 </style>
 </head>
 <body>
@@ -233,6 +266,38 @@ function pagarPorOutro(tk,n,valor){
     ${cod?`<div class="pixcode" style="word-break:break-all;font-family:monospace;font-size:12px;background:var(--card2,#f2f4f8);padding:10px;border-radius:8px">${cod}</div>
     <div class="row mt" style="gap:6px"><button class="btn sm" data-copy="${encodeURIComponent(cod)}">Copiar código</button><a class="btn sm green" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Enviar no WhatsApp</a></div>`:'<p class="erro">Não foi possível gerar o PIX desta parcela. Fale com o Suporte NexumCell.</p>'}</div>`);
 }
+/* ===================== App do cliente — camada "nível banco" (dashboard + abas) ===================== */
+const IB={ // ícones
+  casa:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  fatura:'<path d="M6 2h9l5 5v15H6z"/><path d="M9 12h7M9 16h7M9 8h3"/>',
+  pix:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  ajuda:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .8-1 1.7"/><path d="M12 17h.01"/>',
+  cel:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  quitar:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  debito:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
+  pontos:'<path d="M12 2l2.4 7.4H22l-6 4.3 2.3 7.3-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/>',
+  acordo:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>', relogio:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+};
+const sv=(d,st='currentColor',w=2)=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${st}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const iniNome=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+const pNome=n=>String(n||'').trim().split(/\s+/)[0]||'cliente';
+function cliResumo(aps){
+  let aberto=0,pago=0,restantes=0,prox=null,proxAp=null;
+  aps.forEach(ap=>{ const enc=ap.quitado||ap.status==='QUITADO'||ap.status==='CANCELADO';
+    (ap.parcelas||[]).forEach(p=>{ if(p.pago){ pago+=Number(p.valorPago??p.valor)||0; }
+      else if(!enc){ const h=valorHoje(p,ap); aberto+=Number(h.valor)||0; restantes++;
+        if(!prox||String(p.venc)<String(prox.venc)){ prox=p; proxAp=ap; } } }); });
+  return {aberto:r2(aberto),pago:r2(pago),restantes,prox,proxAp,pct:(pago+aberto)>0?Math.round(pago/(pago+aberto)*100):0};
+}
+function cliHero(aps,nome,R){
+  return `<div class="bk-top"><div class="bk-hi"><div><small>Olá,</small><b>${esc(pNome(nome))}</b></div><div class="bk-av">${esc(iniNome(nome))}</div></div>
+    <div class="bk-saldo"><small>Total em aberto</small><div class="v">${brl(R.aberto)}</div>
+    <div class="sub">${aps.length>1?aps.length+' contratos':'1 contrato'} · ${R.restantes} parcela(s) restante(s)</div>
+    <div class="bk-prog"><i style="width:${R.pct}%"></i></div>
+    <div class="bk-progl"><span>Pago: ${brl(R.pago)}</span><span>${R.pct}% quitado</span></div></div></div>`;
+}
+let CLI_TAB='inicio';
 async function telaContratos(){
   $('#sair').hidden=false;
   const aps=(await Promise.all(S.tokens.map(tk=>DB.get('aparelhos',tk).catch(()=>null)))).filter(Boolean);
@@ -240,8 +305,90 @@ async function telaContratos(){
   if(!aps.length){ sessionStorage.removeItem('nxc_cli'); return telaLogin('Contrato não encontrado.'); }
   aps.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
   if(!$('#chatBtn')) document.body.insertAdjacentHTML('beforeend','<button id="chatBtn" class="chat-btn" aria-label="Tirar dúvidas">💬 Dúvidas</button>');
-  $('#app').innerHTML=`<h1>Olá, ${esc(aps[0].clienteNome||'cliente')}!</h1><p class="muted" style="margin:0">${aps.length>1?aps.length+' contratos':'Seu contrato'} com a ${esc(aps[0].recebedor||'NexumCell')}</p>`+aps.map(cardContrato).join('');
+  S._aps=aps;
+  renderBanco();
 }
+function renderBanco(){
+  const aps=S._aps, R=cliResumo(aps), nome=aps[0].clienteNome||'cliente';
+  $('#app').innerHTML=cliHero(aps,nome,R)+`<div class="bk-body" id="bkBody"></div>`+navBanco();
+  renderTabBanco(CLI_TAB);
+}
+function navBanco(){
+  const it=[['inicio','Início',IB.casa],['faturas','Faturas',IB.fatura],['pagar','Pagar',IB.pix],['ajuda','Ajuda',IB.ajuda]];
+  return `<div class="bk-nav">${it.map(([k,l,ic])=>`<button class="${k===CLI_TAB?'on':''}" data-tabbk="${k}"><span class="ic">${sv(ic)}</span>${l}</button>`).join('')}</div>`;
+}
+function renderTabBanco(tab){
+  CLI_TAB=tab; const b=$('#bkBody'); if(!b) return;
+  document.querySelectorAll('[data-tabbk]').forEach(x=>x.classList.toggle('on',x.dataset.tabbk===tab));
+  const aps=S._aps, R=cliResumo(aps);
+  if(tab==='inicio') b.innerHTML=tabInicioBk(aps,R);
+  else if(tab==='faturas') b.innerHTML=tabFaturasBk(aps);
+  else if(tab==='pagar') b.innerHTML=tabPagarBk(aps,R);
+  else if(tab==='ajuda') b.innerHTML=tabAjudaBk(aps);
+  window.scrollTo(0,0);
+}
+function tabInicioBk(aps,R){
+  const pri=R.proxAp||aps[0], hp=R.prox?valorHoje(R.prox,pri):null;
+  const fat=R.prox?`<div class="card" style="margin-top:16px"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><small class="muted">Próxima fatura</small><div style="font-weight:700;font-size:15px">Parcela ${R.prox.n} · ${esc(pri.modelo||'')}</div><small class="muted">vence ${fmtD(R.prox.venc)}</small></div>${hp&&hp.tipo==='atraso'?`<span class="badge b-red">${hp.dias}d em atraso</span>`:hp&&hp.tipo==='hoje'?'<span class="badge b-amber">vence hoje</span>':'<span class="badge b-amber">a vencer</span>'}</div>
+    <div style="font-size:26px;font-weight:800;margin:8px 0 2px">${brl(hp?hp.valor:R.prox.valor)}</div>
+    <button class="btn gold full" data-pagar="${pri.id}" data-n="${R.prox.n}" data-v="${hp?hp.valor:R.prox.valor}" style="margin-top:8px">Pagar com PIX</button>
+    <button class="btn full" data-outrem="${pri.id}" data-n="${R.prox.n}" data-v="${hp?hp.valor:R.prox.valor}" style="margin-top:6px">Pedir para alguém pagar</button></div>`
+    :`<div class="card" style="margin-top:16px"><div class="aviso ok" style="margin:0">Você está em dia. Nenhuma parcela em aberto no momento.</div></div>`;
+  const q=pri&&!pri.quitado&&(pri.parcelas||[]).filter(p=>!p.pago).length>1?quitacao(pri):null;
+  const atalhos=`<div class="bk-sect">Atalhos</div><div class="bk-atalhos">
+    ${q&&q.total>0?`<div class="bk-atalho" data-pagar="${pri.id}" data-n="0" data-v="${q.total}"><div class="ic">${sv(IB.quitar)}</div><span>Quitar<br>contrato</span></div>`:''}
+    <div class="bk-atalho" data-abrir="${pri.id}"><div class="ic">${sv(IB.debito)}</div><span>Débito<br>automático</span></div>
+    <div class="bk-atalho" data-abrir="${pri.id}"><div class="ic">${sv(IB.pontos)}</div><span>Meus<br>pontos</span></div>
+    ${hp&&hp.tipo==='atraso'?`<div class="bk-atalho" data-acordo="${pri.id}"><div class="ic">${sv(IB.acordo)}</div><span>Fazer<br>acordo</span></div>`:`<div class="bk-atalho" data-tabbk="faturas"><div class="ic">${sv(IB.fatura)}</div><span>Ver<br>faturas</span></div>`}</div>`;
+  let mini=''; const sc=pri.score, pt=(typeof pontos==='function')?pontos(pri):null;
+  if(sc||((pt&&pt.pp))){ mini=`<div class="bk-sect">Seu relacionamento</div><div class="bk-mini">
+    ${sc?`<div class="m"><small>Score NexumCell</small><b style="color:#A97B23">${sc.valor} · ${esc(sc.faixa)}</b><small class="muted">${sc.proxima?`faltam ${sc.proxima.falta} p/ ${esc(sc.proxima.faixa)}`:'faixa máxima'}</small></div>`:''}
+    ${pt&&pt.pp?`<div class="m"><small>Pontos</small><b style="color:var(--ok)">${pt.saldo}</b><small class="muted">= ${brl(pt.reais)} em desconto</small></div>`:''}</div>`; }
+  const lista=`<div class="bk-sect">Seus aparelhos</div>`+aps.map(ap=>{ const [st,cor]=situacao(ap);
+    return `<div class="bk-ap" data-abrir="${ap.id}"><div class="ap-ic">${sv(IB.cel)}</div><div style="flex:1"><b>${esc((ap.marca||'')+' '+(ap.modelo||''))}</b><div style="color:var(--mut);font-size:12px">Contrato ${esc(ap.vendaNumero)} · ${esc(ap.lojaNome||'')}</div></div><span class="badge b-${cor}">${esc(st)}</span></div>`; }).join('');
+  return fat+atalhos+mini+lista;
+}
+function tabFaturasBk(aps){
+  const linhas=[];
+  aps.forEach(ap=>(ap.parcelas||[]).forEach(p=>linhas.push({ap,p})));
+  linhas.sort((a,b)=>{ const pa=a.p.pago,pb=b.p.pago; if(pa!==pb) return pa?1:-1; return String(a.p.venc).localeCompare(String(b.p.venc)); });
+  const row=({ap,p})=>{ const h=valorHoje(p,ap), paga=p.pago;
+    const dot=paga?`<div class="dot" style="background:var(--ok-s,#E7F3EC)">${sv(IB.check,'#15754A',2.4)}</div>`:`<div class="dot" style="background:#FBF3DD">${sv(IB.relogio,'#8A6400',2.2)}</div>`;
+    return `<div class="bk-ex">${dot}<div class="t"><b>Parcela ${p.n} · ${esc(ap.modelo||'')}</b><span>${paga?`paga em ${fmtD(p.pagoEm)}`:`vence ${fmtD(p.venc)}`}${paga&&p.forma?' · '+esc(p.forma):''}</span></div>
+      <div class="amt">${brl(paga?(p.valorPago??p.valor):h.valor)}<br>${paga?`<button class="btn sm" data-recibo="${ap.id}" data-n="${p.n}" style="margin-top:4px">Recibo</button>`:(ap.quitado||ap.status==='CANCELADO'?'':`<button class="btn sm gold" data-pagar="${ap.id}" data-n="${p.n}" data-v="${h.valor}" style="margin-top:4px">Pagar</button>`)}</div></div>`; };
+  return `<div class="bk-sect">Extrato — todas as parcelas</div><div class="card">${linhas.map(row).join('')||'<p class="muted">Nenhuma parcela.</p>'}</div>
+    <div class="card" style="text-align:center;color:var(--mut);font-size:13px">O extrato junta as parcelas dos seus contratos. As em aberto aparecem primeiro.</div>`;
+}
+function tabPagarBk(aps,R){
+  if(!R.prox) return `<div class="card" style="margin-top:16px"><div class="aviso ok" style="margin:0">Tudo em dia! Você não tem parcela em aberto agora.</div></div>`;
+  const pri=R.proxAp, hp=valorHoje(R.prox,pri);
+  return `<div class="bk-sect">Pagar com PIX</div><div class="card" style="text-align:center">
+    <div style="font-weight:700;font-size:15px">Parcela ${R.prox.n} · ${esc(pri.modelo||'')}</div>
+    <div style="font-size:28px;font-weight:800;margin:4px 0 2px">${brl(hp.valor)}</div>
+    <small class="muted">vence ${fmtD(R.prox.venc)}</small>
+    <button class="btn gold full" data-pagar="${pri.id}" data-n="${R.prox.n}" data-v="${hp.valor}" style="margin-top:14px">Gerar PIX e pagar</button>
+    <button class="btn full" data-outrem="${pri.id}" data-n="${R.prox.n}" data-v="${hp.valor}" style="margin-top:6px">Pedir para alguém pagar</button>
+    <p class="muted" style="font-size:12.5px;margin:14px 0 0">Ao tocar, mostramos o código PIX (copia e cola) e o QR. O aparelho libera sozinho assim que o pagamento cair.</p></div>
+    ${aps.length>1?`<div class="card" style="color:var(--mut);font-size:13px;text-align:center">Quer pagar uma parcela de outro contrato? Toque no aparelho em <b>Início</b> para ver todas as opções.</div>`:''}`;
+}
+function tabAjudaBk(aps){
+  const pri=aps[0];
+  return `<div class="bk-sect">Suporte e documentos</div><div class="card">
+    <p style="margin:0 0 12px;color:#38435C;font-size:14px">Dúvidas sobre parcela, aparelho ou contrato são com a NexumCell, direto por aqui.</p>
+    <button class="btn gold full" onclick="abrirChat&&abrirChat()">Abrir conversa com o suporte</button>
+    <a class="btn full" style="margin-top:8px" href="?contrato=${encodeURIComponent(pri.id)}${typeof DEMO!=='undefined'&&DEMO?'&demo':''}" target="_blank" rel="noopener">Baixar meu contrato assinado</a>
+    <button class="btn full" style="margin-top:8px" data-carne="${pri.id}">Baixar carnê</button>
+    <button class="btn full" style="margin-top:8px" data-pedido="${pri.id}" data-tipo="DADOS">Atualizar telefone ou endereço</button>
+    <button class="btn full" style="margin-top:8px" data-pedido="${pri.id}" data-tipo="LGPD">Meus dados (LGPD)</button>
+    <button class="btn full" style="margin-top:8px;color:var(--bad);border-color:#F2C9C9" data-roubo="${pri.id}">Comunicar roubo, furto ou perda</button></div>
+    ${aps.length>1?`<div class="card" style="color:var(--mut);font-size:13px;text-align:center">Para ações de um contrato específico, abra o aparelho em <b>Início</b>.</div>`:''}`;
+}
+function abrirAparelhoBk(tk){
+  const ap=S.aps[tk]; if(!ap) return;
+  $('#bkBody').innerHTML=`<button class="bk-voltar" data-voltarbk="1">${sv('<path d="M15 18l-6-6 6-6"/>')} Voltar</button>`+cardContrato(ap);
+  window.scrollTo(0,0);
+}
+
 function cardContrato(ap){
   const [st,cor]=situacao(ap), tk=ap.id, ps=ap.parcelas||[], abertas=ps.filter(p=>!p.pago);
   const prox=abertas[0], encerrado=ap.quitado||ap.status==='QUITADO'||ap.status==='CANCELADO';
@@ -983,6 +1130,9 @@ $('#lang').onclick=()=>{ LANG=LANG==='es'?'pt':'es'; try{ localStorage.setItem('
 
 /* ---------- eventos e início ---------- */
 document.addEventListener('click',e=>{
+  const _tb=e.target.closest('[data-tabbk]'); if(_tb){ renderTabBanco(_tb.dataset.tabbk); return; }
+  const _ab=e.target.closest('[data-abrir]'); if(_ab){ abrirAparelhoBk(_ab.dataset.abrir); return; }
+  const _vb=e.target.closest('[data-voltarbk]'); if(_vb){ renderBanco(); return; }
   const cp=e.target.closest('[data-copy]'); if(cp){ try{ navigator.clipboard.writeText(decodeURIComponent(cp.dataset.copy)); toast('Código copiado','ok'); }catch(err){} return; }
   const op=e.target.closest('[data-outrem]'); if(op){ pagarPorOutro(op.dataset.outrem,+op.dataset.n,+op.dataset.v); return; }
   const p=e.target.closest('[data-pagar]'); if(p){ const n=+p.dataset.n; pagar(p.dataset.pagar,n,+p.dataset.v,n>0?`Parcela ${n} · contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`:`Quitação do contrato nº ${S.aps[p.dataset.pagar].vendaNumero}`); return; }
