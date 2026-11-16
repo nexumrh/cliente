@@ -428,6 +428,7 @@ function cardContrato(ap){
     ${!encerrado&&!roubo&&!ap.avaliado&&!localStorage.getItem('nxc_nps_'+tk)?`<div class="aviso warn" style="margin-top:14px"><b>Como foi o seu atendimento na compra?</b><div class="nps">${Array.from({length:11},(_,i)=>`<button data-nps="${tk}" data-n="${i}">${i}</button>`).join('')}</div><span class="small">0 = muito ruim · 10 = excelente</span></div>`:''}
     ${blocoPedidos(ap)}
     ${ap.status!=='CANCELADO'?`<div class="aviso ok" style="margin-top:14px"><b>Indique um amigo e ganhe desconto!</b><br>Quando um amigo seu comprar com o código <b class="mono">NXC-${esc(ap.vendaNumero)}</b>, você ganha desconto na sua última parcela.
+      ${ap.indicacaoInfo&&(ap.indicacaoInfo.indicados||ap.indicacaoInfo.pendentes)?`<div style="margin-top:8px;font-size:13px">${ap.indicacaoInfo.indicados?`✅ <b>${ap.indicacaoInfo.indicados}</b> amigo(s) já compraram — você ganhou <b>${brl(ap.indicacaoInfo.ganho||0)}</b> de desconto.`:''}${ap.indicacaoInfo.pendentes?`<br>⏳ ${ap.indicacaoInfo.pendentes} em análise.`:''}</div>`:''}
       <a class="btn sm" style="margin-top:8px" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Comprei meu celular parcelado na ${ap.lojaNome||'NexumCell'}. Se for comprar lá, use meu código de indicação NXC-${ap.vendaNumero}!`)}">Enviar para um amigo</a></div>`:''}
     <div class="row" style="margin-top:14px;gap:8px">
       ${!encerrado&&!roubo?`<button class="btn sm" style="color:var(--bad);border-color:#F2C9C9" data-roubo="${tk}">Roubo, furto ou perda</button>`:''}
