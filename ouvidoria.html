@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ouvidoria NexumCell</title>
+<meta name="theme-color" content="#0A1733">
+<link rel="icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0A1733;--bg:#F4F4F8;--line:#E2E1EC;--txt:#1B1A2E;--mut:#696784;--pri:#1A5CFF;--gold:#E2B33B;--ok:#0E8A5F;--bad:#C23B3B;--f:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}body{margin:0;font-family:var(--f);color:var(--txt);background:var(--bg);line-height:1.5}
+header{background:var(--ink);color:#fff;padding:18px 0 70px}.w{max-width:720px;margin:0 auto;padding:0 18px}
+.logo{font-weight:800;letter-spacing:.06em}.logo b{color:var(--gold)}h1{font-size:28px;margin:18px 0 6px}header p{opacity:.8;margin:0}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:-50px;box-shadow:0 12px 30px rgba(10,23,51,.08)}
+.tabs{display:flex;gap:6px;background:#EEF0F6;padding:4px;border-radius:12px;margin-bottom:18px}.tabs button{flex:1;border:0;background:none;padding:10px;border-radius:9px;font:600 14px var(--f);color:var(--mut);cursor:pointer}.tabs button.on{background:#fff;color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 0}input,select,textarea{width:100%;margin-top:5px;padding:12px;border:1px solid var(--line);border-radius:11px;font:15px var(--f);background:#fff}textarea{resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.btn{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:var(--ink);color:#fff;font:700 16px var(--f);cursor:pointer}.btn:disabled{opacity:.6}
+.msg{margin-top:12px;font-size:14px;color:var(--bad)}.ok{background:#E6F6EE;border:1px solid #BFE6D2;color:#0B5E41;border-radius:14px;padding:16px;margin-top:6px}
+.res{border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}.res b{font-size:15px}.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.info{font-size:13px;color:var(--mut);margin-top:22px}.info p{margin:6px 0}
+footer{text-align:center;color:var(--mut);font-size:13px;padding:26px 0 40px}footer a{color:inherit;margin:0 8px}
+@media(max-width:560px){.g2{grid-template-columns:1fr}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header><div class="w"><a class="logo" href="seja-cliente.html" style="color:#fff;text-decoration:none">NEXUM<b>CELL</b></a><h1>Ouvidoria</h1><p>Se o atendimento não resolveu, registre aqui. Você recebe um protocolo e a resposta chega em até 10 dias úteis.</p></div></header>
+<main class="w">
+  <div class="card">
+    <div class="tabs"><button class="on" data-t="abrir">Abrir protocolo</button><button data-t="consultar">Consultar protocolo</button></div>
+    <form id="fA">
+      <label>Tipo<select id="tipo"><option value="RECLAMACAO">Reclamação</option><option value="DENUNCIA">Denúncia</option><option value="SUGESTAO">Sugestão</option><option value="ELOGIO">Elogio</option><option value="LGPD">Meus dados pessoais (LGPD)</option></select></label>
+      <label>Nome completo<input id="nome" maxlength="100" autocomplete="name" required></label>
+      <div class="g2"><label>CPF<input id="cpf" inputmode="numeric" maxlength="14" required></label><label>WhatsApp<input id="tel" inputmode="tel" maxlength="16" autocomplete="tel"></label></div>
+      <label>E-mail (opcional)<input id="email" type="email" maxlength="120" autocomplete="email"></label>
+      <label>Assunto<input id="assunto" maxlength="120" placeholder="Ex.: cobrança, aparelho travado, atendimento"></label>
+      <label>O que aconteceu<textarea id="relato" rows="6" maxlength="4000" placeholder="Conte com detalhes: datas, número do contrato, loja e com quem falou." required></textarea></label>
+      <label style="font-weight:400;display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="lgpd" style="width:auto;margin-top:4px"> Autorizo o uso destes dados para analisar e responder este protocolo, conforme a <a href="privacidade.html">Política de privacidade</a>.</label>
+      <button class="btn" id="bA">Enviar</button><div class="msg" id="mA"></div>
+    </form>
+    <form id="fC" hidden>
+      <div class="g2"><label>Número do protocolo<input id="prot" maxlength="20" placeholder="OUV…" required style="text-transform:uppercase"></label><label>4 últimos dígitos do CPF<input id="fim" inputmode="numeric" maxlength="4" required></label></div>
+      <button class="btn" id="bC">Consultar</button><div class="msg" id="mC"></div><div id="rC"></div>
+    </form>
+    <div class="info"><p><b>Antes de abrir:</b> tente o atendimento pelo app NexumCell, que costuma resolver no mesmo dia.</p><p>Pedidos sobre dados pessoais (acesso, correção ou exclusão) também podem ser feitos aqui, no tipo "Meus dados pessoais".</p></div>
+  </div>
+</main>
+<footer><a href="./">App do cliente</a><a href="seja-cliente.html">Seja cliente</a><a href="privacidade.html">Privacidade</a></footer>
+<script src="nexumcell-config.js"></script>
+<script>
+const $=s=>document.querySelector(s), dig=s=>String(s||'').replace(/\D/g,''), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DEMO=new URLSearchParams(location.search).has('demo');
+function cpfOk(c){ c=dig(c); if(c.length!==11||/^(\d)\1+$/.test(c)) return false; for(const t of [9,10]){ let s=0; for(let i=0;i<t;i++) s+=+c[i]*(t+1-i); if(((s*10)%11)%10!==+c[t]) return false; } return true; }
+let SERV=null;
+async function serv(){ if(SERV!==null) return SERV; try{ const p=(window.NEXUMCELL_FIREBASE||{}).projectId||'nexumcell';
+  const r=await fetch(`https://firestore.googleapis.com/v1/projects/${p}/databases/(default)/documents/publico/vitrine`); const j=await r.json(); SERV=String(j?.fields?.servidor?.stringValue||'').replace(/\/$/,''); }catch(e){ SERV=''; } return SERV; }
+async function api(corpo){ if(DEMO) return corpo.acao==='abrir'?{protocolo:'OUV2611220001',prazo:'2026-12-07'}:{protocolo:corpo.protocolo,status:'RESPONDIDO',prazo:'2026-12-07',tipo:'RECLAMACAO',assunto:'Cobrança',em:Date.now()-864e5,resposta:'Olá! Corrigimos a cobrança em duplicidade e o valor foi estornado.'};
+  const s=await serv(); if(!s) throw new Error('A ouvidoria está indisponível agora. Fale com o atendimento pelo app.');
+  const r=await fetch(s+'/api/ouvidoria',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)}); const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erro||'Erro '+r.status); return j; }
+const dt=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'';
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b)); $('#fA').hidden=b.dataset.t!=='abrir'; $('#fC').hidden=b.dataset.t!=='consultar'; });
+$('#cpf').addEventListener('input',e=>{ const d=dig(e.target.value).slice(0,11); e.target.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); });
+$('#fA').onsubmit=async e=>{ e.preventDefault(); const m=$('#mA'); m.textContent='';
+  if(!cpfOk($('#cpf').value)) return m.textContent='CPF inválido.'; if(dig($('#tel').value).length<10&&!/@/.test($('#email').value)) return m.textContent='Informe um WhatsApp com DDD ou um e-mail para receber a resposta.';
+  if($('#relato').value.trim().length<15) return m.textContent='Conte um pouco mais do que aconteceu.'; if(!$('#lgpd').checked) return m.textContent='Marque a autorização para continuar.';
+  $('#bA').disabled=true;
+  try{ const r=await api({acao:'abrir',tipo:$('#tipo').value,nome:$('#nome').value.trim(),cpf:dig($('#cpf').value),telefone:dig($('#tel').value),email:$('#email').value.trim(),assunto:$('#assunto').value.trim(),relato:$('#relato').value.trim()});
+    $('#fA').innerHTML=`<div class="ok"><b>Protocolo registrado</b><div style="font-size:24px;font-weight:800;margin:6px 0;letter-spacing:.04em">${esc(r.protocolo)}</div>Guarde este número. A resposta chega até <b>${dt(r.prazo)}</b> pelo WhatsApp ou e-mail informado. Você também pode consultar aqui, na aba "Consultar protocolo".</div>`; }
+  catch(err){ m.textContent=err.message; $('#bA').disabled=false; } };
+const ST={ABERTO:['Recebido','#FFF3D6','#7A5A0C'],EM_ANALISE:['Em análise','#E5EDFF','#1A3FA8'],RESPONDIDO:['Respondido','#E6F6EE','#0B5E41'],ENCERRADO:['Encerrado','#EEF0F6','#555']};
+$('#fC').onsubmit=async e=>{ e.preventDefault(); const m=$('#mC'); m.textContent=''; $('#rC').innerHTML=''; $('#bC').disabled=true;
+  try{ const r=await api({acao:'consultar',protocolo:$('#prot').value.trim().toUpperCase(),cpfFim:dig($('#fim').value)}); const s=ST[r.status]||[r.status,'#EEF0F6','#555'];
+    $('#rC').innerHTML=`<div class="res"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(r.protocolo)}</b><span class="pill" style="background:${s[1]};color:${s[2]}">${s[0]}</span></div><div style="color:var(--mut);font-size:14px;margin-top:4px">${esc(r.assunto||'')} · aberto em ${new Date(r.em).toLocaleDateString('pt-BR')} · prazo ${dt(r.prazo)}</div>${r.resposta?`<div style="margin-top:12px;white-space:pre-wrap">${esc(r.resposta)}</div>`:'<div style="margin-top:12px;color:var(--mut)">Ainda sem resposta. Estamos analisando.</div>'}</div>`; }
+  catch(err){ m.textContent=err.message; } $('#bC').disabled=false; };
+</script>
+</body>
+</html>
