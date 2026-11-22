@@ -301,6 +301,7 @@ let CLI_TAB='inicio';
 async function telaContratos(){
   $('#sair').hidden=false;
   const aps=(await Promise.all(S.tokens.map(tk=>DB.get('aparelhos',tk).catch(()=>null)))).filter(Boolean);
+  setTimeout(()=>avisarVencimentos(aps),1500);
   S.aps={}; aps.forEach(a=>S.aps[a.id]=a);
   if(!aps.length){ sessionStorage.removeItem('nxc_cli'); return telaLogin('Contrato não encontrado.'); }
   aps.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
@@ -329,6 +330,16 @@ function renderTabBanco(tab){
 }
 function nxTag(n){ let x=(Math.max(0,Math.floor(+n||0))*1103515245+12345)%8031810176, s=''; for(let i=0;i<7;i++){ s=String.fromCharCode(65+(x%26))+s; x=Math.floor(x/26); } return 'N'+s; }
 document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-copiarind]'); if(!b) return; navigator.clipboard?.writeText(b.dataset.copiarind).then(()=>toast('Link copiado','ok'),()=>prompt('Copie o link:',b.dataset.copiarind)); });
+function avisarVencimentos(aps){
+  if(!('Notification' in window)||Notification.permission!=='granted') return; const h=new Date(Date.now()-3*3600e3).toISOString().slice(0,10); let vistos={}; try{ vistos=JSON.parse(localStorage.getItem('nxc_av')||'{}'); }catch(e){}
+  const dias=(a,b)=>Math.round((new Date(b+'T12:00:00Z')-new Date(a+'T12:00:00Z'))/864e5);
+  (aps||[]).forEach(ap=>{ const p=(ap.parcelas||[]).filter(x=>!x.pago).sort((a,b)=>a.venc.localeCompare(b.venc))[0]; if(!p) return; const d=dias(h,p.venc); if(d>3) return; const k=ap.id+':'+p.n+':'+h; if(vistos[k]) return;
+    const t=d<0?`Parcela ${p.n} em atraso`:d===0?`Parcela ${p.n} vence hoje`:`Parcela ${p.n} vence em ${d} dia${d>1?'s':''}`, corpo=`${brl(p.valor)} · ${ap.modelo||'seu celular'}. Pague com Pix pelo app NexumCell.`;
+    const mostra=()=>navigator.serviceWorker?.ready?navigator.serviceWorker.ready.then(r=>r.showNotification(t,{body:corpo,icon:'icon-192.png',tag:k})):new Notification(t,{body:corpo,icon:'icon-192.png'});
+    try{ mostra(); vistos[k]=1; }catch(e){} });
+  try{ localStorage.setItem('nxc_av',JSON.stringify(Object.fromEntries(Object.entries(vistos).filter(([k])=>k.endsWith(h))))); }catch(e){}
+}
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-avisoson]'); if(!b) return; Notification.requestPermission().then(p=>{ if(p==='granted'){ toast('Avisos ativados','ok'); avisarVencimentos(Object.values(S.aps||{})); } else toast('Os avisos foram bloqueados no navegador','err'); b.closest('.card')?.remove(); }); });
 function tabInicioBk(aps,R){
   const pri=R.proxAp||aps[0], hp=R.prox?valorHoje(R.prox,pri):null;
   const fat=R.prox?`<div class="card" style="margin-top:16px"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><small class="muted">Próxima fatura</small><div style="font-weight:700;font-size:15px">Parcela ${R.prox.n} · ${esc(pri.modelo||'')}</div><small class="muted">vence ${fmtD(R.prox.venc)}</small></div>${hp&&hp.tipo==='atraso'?`<span class="badge b-red">${hp.dias}d em atraso</span>`:hp&&hp.tipo==='hoje'?'<span class="badge b-amber">vence hoje</span>':'<span class="badge b-amber">a vencer</span>'}</div>
@@ -353,7 +364,8 @@ function tabInicioBk(aps,R){
   const indique=pri&&!pri.quitado?`<div class="bk-sect">Indique e ganhe</div><div class="card" style="margin-top:0"><div style="font-weight:700;font-size:15px">Indique um amigo e ganhe desconto na sua parcela</div><p class="small muted" style="margin:4px 0 10px">Quando o seu amigo comprar um celular com a NexumCell, você ganha ${S.indValor>0?brl(S.indValor)+' de ':''}desconto na próxima parcela. Seu código: <b class="mono">${tagI}</b></p>
     <a class="btn gold full" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Comprei meu celular parcelado na NexumCell, com entrada e parcelas que cabem no bolso. Faça a sua pré-análise grátis por aqui: '+linkI)}">Convidar pelo WhatsApp</a>
     <button class="btn full" style="margin-top:6px" data-copiarind="${esc(linkI)}">Copiar meu link</button></div>`:'';
-  return fat+atalhos+mini+indique+lista;
+  const avisos=('Notification' in window)&&Notification.permission==='default'?`<div class="card" style="margin-top:12px;display:flex;gap:12px;align-items:center"><div style="flex:1"><b>Avisos no celular</b><div class="small muted">Receba um aviso 3 dias antes do vencimento e quando a parcela vencer.</div></div><button class="btn sm gold" data-avisoson>Ativar</button></div>`:'';
+  return fat+avisos+atalhos+mini+indique+lista;
 }
 function tabFaturasBk(aps){
   const linhas=[];
