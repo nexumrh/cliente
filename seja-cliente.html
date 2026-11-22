@@ -34,7 +34,12 @@ details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:
 .final{background:var(--ink);color:#fff;border-radius:24px;padding:40px;text-align:center}.final p{opacity:.8;margin:0 0 22px}
 footer{padding:30px 0 40px;color:var(--mut);font-size:13px;text-align:center}footer a{margin:0 8px}
 @media(max-width:820px){.hero{grid-template-columns:1fr;padding:18px 0 40px}.hero h1{font-size:32px}.g3{grid-template-columns:1fr}.final{padding:28px 20px}h2{font-size:24px}.cta{width:100%;justify-content:center}}
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}.mod{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:4px;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s}
+.mod:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(10,23,51,.1)}.mod small{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.06em}.mod b{font-size:17px}.mod .p{color:var(--pri);font-weight:800;font-size:20px;margin-top:6px}.mod .e{color:var(--mut);font-size:13px}.mod .s{margin-top:10px;font-weight:700;color:var(--ink);font-size:14px}
+.filt{display:flex;gap:6px;flex-wrap:wrap;margin:-12px 0 18px}.filt button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:7px 14px;font:600 13px var(--f);cursor:pointer}.filt button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 </style>
+<script src="nexumcell-config.js"></script>
+<script src="marketing.js"></script>
 </head>
 <body>
 <header><div class="w">
@@ -68,6 +73,11 @@ footer{padding:30px 0 40px;color:var(--mut);font-size:13px;text-align:center}foo
     <div class="box"><div class="n">2</div><h3>Receba a resposta</h3><p>Você vê o resultado na hora e a loja chama você no WhatsApp para confirmar.</p></div>
     <div class="box"><div class="n">3</div><h3>Retire o celular</h3><p>Vá à loja com documento com foto, assine o contrato e saia com o aparelho no mesmo dia.</p></div>
   </div>
+</div></section>
+
+<section id="modelos" hidden style="padding-top:0"><div class="w">
+  <h2>Modelos disponíveis</h2><p class="sub">Toque no modelo para fazer a pré-análise com ele. Valores de exemplo: a parcela final é confirmada na loja.</p>
+  <div class="filt" id="filt"></div><div class="mods" id="mods"></div>
 </div></section>
 
 <section style="padding-top:0"><div class="w">
@@ -107,6 +117,17 @@ footer{padding:30px 0 40px;color:var(--mut);font-size:13px;text-align:center}foo
   if(q.get('vn')){ const el=document.getElementById('ind'); el.style.display='block'; el.textContent='Atendimento de '+q.get('vn').slice(0,60)+'. Faça sua pré-análise e ele recebe na hora.'; }
   const href='./?'+f.toString().replace('pre=&','pre&').replace(/pre=$/,'pre');
   document.getElementById('cta1').href=href; document.getElementById('cta2').href=href;
+  document.addEventListener('click',function(e){ var a=e.target.closest&&e.target.closest('a[href*="?pre"]'); if(a&&window.nxTrack) nxTrack('Lead',{content_name:a.dataset.mod||'pre-analise'}); });
+  /* vitrine: modelos com entrada e parcela de exemplo (mesma conta da pré-análise) */
+  var brl=function(n){ return 'R$ '+(Math.round(n*100)/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }, esc=function(t){ return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]}); };
+  (window.nxVitrine||Promise.resolve({})).then(function(v){ var l=(v.aparelhos||[]).filter(function(a){ return a&&a.preco>0&&a.modelo; }); if(!l.length) return;
+    var pct=(+v.entradaPct||30)/100, n=Math.max.apply(null,String(v.parcelasOpcoes||'12').split(',').map(Number).filter(Boolean)), marcas=['Todas'].concat(l.map(function(a){return a.marca}).filter(function(m,i,arr){return m&&arr.indexOf(m)===i})), mc='Todas';
+    function pinta(){ document.getElementById('filt').innerHTML=marcas.length>2?marcas.map(function(m){ return '<button data-m="'+esc(m)+'" class="'+(m===mc?'on':'')+'">'+esc(m)+'</button>'; }).join(''):'';
+      document.getElementById('mods').innerHTML=l.filter(function(a){ return mc==='Todas'||a.marca===mc; }).slice(0,24).map(function(a){ var ent=Math.round(a.preco*pct*100)/100, p=(a.preco*(1+((a.juros!=null?a.juros:(v.jurosPadrao!=null?v.jurosPadrao:25)))/100)-ent)/n, nome=[a.marca,a.modelo,a.capacidade].filter(Boolean).join(' ');
+        var f2=new URLSearchParams(href.slice(2)); f2.set('a',a.marca+' '+a.modelo+' '+a.capacidade); f2.set('e',ent);
+        return '<a class="mod" data-mod="'+esc(nome)+'" href="./?'+f2.toString().replace(/^pre=&/,'pre&')+'"><small>'+esc(a.marca||'')+'</small><b>'+esc([a.modelo,a.capacidade].filter(Boolean).join(' '))+'</b><span class="p">'+n+'x de '+brl(p)+'</span><span class="e">entrada de '+brl(ent)+'</span><span class="s">Fazer pré-análise →</span></a>'; }).join(''); }
+    document.getElementById('filt').onclick=function(e){ var b=e.target.closest('[data-m]'); if(!b) return; mc=b.dataset.m; pinta(); };
+    pinta(); document.getElementById('modelos').hidden=false; if(window.nxTrack) nxTrack('ViewContent',{content_name:'vitrine'}); });
 })();
 </script>
 </body>
