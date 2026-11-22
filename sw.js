@@ -1,5 +1,5 @@
 /* NexumCell — funciona como app instalado. Sempre busca a versão nova na internet; sem internet, usa a última salva. */
-const CACHE = 'nexumcell-v1';
+const CACHE = 'nexumcell-v2';
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html', './nexumcell-config.js', './icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

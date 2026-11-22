@@ -327,6 +327,8 @@ function renderTabBanco(tab){
   else if(tab==='ajuda') b.innerHTML=tabAjudaBk(aps);
   window.scrollTo(0,0);
 }
+function nxTag(n){ let x=(Math.max(0,Math.floor(+n||0))*1103515245+12345)%8031810176, s=''; for(let i=0;i<7;i++){ s=String.fromCharCode(65+(x%26))+s; x=Math.floor(x/26); } return 'N'+s; }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-copiarind]'); if(!b) return; navigator.clipboard?.writeText(b.dataset.copiarind).then(()=>toast('Link copiado','ok'),()=>prompt('Copie o link:',b.dataset.copiarind)); });
 function tabInicioBk(aps,R){
   const pri=R.proxAp||aps[0], hp=R.prox?valorHoje(R.prox,pri):null;
   const fat=R.prox?`<div class="card" style="margin-top:16px"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><small class="muted">Próxima fatura</small><div style="font-weight:700;font-size:15px">Parcela ${R.prox.n} · ${esc(pri.modelo||'')}</div><small class="muted">vence ${fmtD(R.prox.venc)}</small></div>${hp&&hp.tipo==='atraso'?`<span class="badge b-red">${hp.dias}d em atraso</span>`:hp&&hp.tipo==='hoje'?'<span class="badge b-amber">vence hoje</span>':'<span class="badge b-amber">a vencer</span>'}</div>
@@ -346,7 +348,12 @@ function tabInicioBk(aps,R){
     ${pt&&pt.pp?`<div class="m"><small>Pontos</small><b style="color:var(--ok)">${pt.saldo}</b><small class="muted">= ${brl(pt.reais)} em desconto</small></div>`:''}</div>`; }
   const lista=`<div class="bk-sect">Seus aparelhos</div>`+aps.map(ap=>{ const [st,cor]=situacao(ap);
     return `<div class="bk-ap" data-abrir="${ap.id}"><div class="ap-ic">${sv(IB.cel)}</div><div style="flex:1"><b>${esc((ap.marca||'')+' '+(ap.modelo||''))}</b><div style="color:var(--mut);font-size:12px">Contrato ${esc(ap.vendaNumero)} · ${esc(ap.lojaNome||'')}</div></div><span class="badge b-${cor}">${esc(st)}</span></div>`; }).join('');
-  return fat+atalhos+mini+lista;
+  if(S.indValor==null){ S.indValor=0; DB.get('publico','vitrine').then(v=>{ S.indValor=+v?.indicacaoValor||0; }).catch(()=>{}); }
+  const tagI=nxTag(pri?.vendaNumero), linkI=new URL('seja-cliente.html?ind='+tagI+(pri?.lojaId?'&l='+encodeURIComponent(pri.lojaId):''),location.href).href;
+  const indique=pri&&!pri.quitado?`<div class="bk-sect">Indique e ganhe</div><div class="card" style="margin-top:0"><div style="font-weight:700;font-size:15px">Indique um amigo e ganhe desconto na sua parcela</div><p class="small muted" style="margin:4px 0 10px">Quando o seu amigo comprar um celular com a NexumCell, você ganha ${S.indValor>0?brl(S.indValor)+' de ':''}desconto na próxima parcela. Seu código: <b class="mono">${tagI}</b></p>
+    <a class="btn gold full" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Comprei meu celular parcelado na NexumCell, com entrada e parcelas que cabem no bolso. Faça a sua pré-análise grátis por aqui: '+linkI)}">Convidar pelo WhatsApp</a>
+    <button class="btn full" style="margin-top:6px" data-copiarind="${esc(linkI)}">Copiar meu link</button></div>`:'';
+  return fat+atalhos+mini+indique+lista;
 }
 function tabFaturasBk(aps){
   const linhas=[];
@@ -583,7 +590,8 @@ async function telaPre(id){
   const Q=new URLSearchParams(location.search), qAp=Q.get('a'), qE=+Q.get('e')||0, qL=Q.get('l'), qVn=Q.get('vn');
   if(qAp){ const i=(vit.aparelhos||[]).findIndex(a=>`${a.marca} ${a.modelo} ${a.capacidade}`===qAp); if(i>=0){ $('#pAp').value=String(i); sim(); } }
   if(qE) $('#pEnt').value=qE; if(qL&&(vit.lojas||[]).some(l=>l.id===qL)) $('#pLoja').value=qL;
-  if(qVn) $('#fPre').insertAdjacentHTML('afterbegin',`<div class="aviso ok" style="margin-top:0">📲 Simulação enviada por <b>${esc(qVn)}</b>. Preencha seus dados para ver a resposta na hora.</div>`);
+  if(!qVn&&Q.get('ind')) $('#fPre').insertAdjacentHTML('afterbegin',`<div class="aviso ok" style="margin-top:0">Você foi indicado por um cliente NexumCell. Preencha seus dados para ver a resposta na hora.</div>`);
+  if(qVn) $('#fPre').insertAdjacentHTML('afterbegin',`<div class="aviso ok" style="margin-top:0">Simulação enviada por <b>${esc(qVn)}</b>. Preencha seus dados para ver a resposta na hora.</div>`);
   $('#fPre').addEventListener('submit',async e=>{ e.preventDefault(); const m=$('#pMsg'); m.textContent='';
     const cpf=onlyDig($('#pCpf').value), tel=onlyDig($('#pTel').value), a=vit.aparelhos[$('#pAp').value], loja=(vit.lojas||[]).find(l=>l.id===$('#pLoja').value)||{};
     if(!cpfOk(cpf)) return m.textContent='CPF inválido.'; if(tel.length<10) return m.textContent='WhatsApp com DDD.';
@@ -591,7 +599,7 @@ async function telaPre(id){
     if(!$('#pOk').checked) return m.textContent='Marque a autorização para continuar.';
     $('#pBtn').disabled=true;
     try{ const dados={nome:$('#pNome').value.trim().slice(0,120),cpf,nasc:$('#pNasc').value,telefone:tel,cidade:$('#pCid').value.trim(),renda:+$('#pRenda').value||0,profissao:$('#pProf').value.trim(),
-        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now(),...(Q.get('v')?{vendedorUid:Q.get('v'),vendedorNome:qVn||''}:{})};
+        aparelho:a?`${a.marca} ${a.modelo} ${a.capacidade}`:'',entrada:+$('#pEnt').value||0,lojaId:loja.id||'',lojaNome:loja.nome||'',aceiteLgpd:true,status:'NOVA',criadoEm:Date.now(),...(Q.get('v')?{vendedorUid:Q.get('v'),vendedorNome:qVn||''}:{}),...(/^N[A-Z]{7}$/.test(String(Q.get('ind')||'').toUpperCase())?{indicadoPor:Q.get('ind').toUpperCase()}:{})};
       const id=S.preServ?(await apiPre({acao:'enviar',...dados})).id:await DB.add('preanalises',dados);
       history.replaceState(null,'',`?pre=${id}${DEMO?'&demo':''}`);
       if(S.preServ){ toast('Pré-análise enviada!','ok'); return telaPre(id); }   // resposta automática já aparece na tela
@@ -1169,6 +1177,6 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   traduzirNo(document.body);
 })();
 </script>
-<p class="center small" style="margin:26px 0 18px"><a href="privacidade.html" style="color:inherit">Política de privacidade</a> · <a href="termos.html" style="color:inherit">Termos de uso</a></p>
+<p class="center small" style="margin:26px 0 18px"><a href="privacidade.html" style="color:inherit">Política de privacidade</a> · <a href="termos.html" style="color:inherit">Termos de uso</a> · <a href="ouvidoria.html" style="color:inherit">Ouvidoria</a> · <a href="seja-cliente.html" style="color:inherit">Seja cliente</a></p>
 </body>
 </html>
