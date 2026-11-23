@@ -127,6 +127,12 @@ body{font-feature-settings:"tnum" 1,"lnum" 1}
 .bolha.eu{background:var(--pri)}
 a{color:var(--pri)}
 @media(min-width:700px){main{max-width:680px}.bk-nav{max-width:680px;border-radius:16px 16px 0 0}}
+
+/* botão de atendimento igual ao do Nexum RH */
+.chat-btn{width:58px;height:58px;padding:0!important;border-radius:50%!important;background:#0A1733!important;color:#fff;display:flex;align-items:center;justify-content:center;right:20px!important;bottom:20px!important;z-index:45!important;box-shadow:0 8px 24px rgba(10,23,51,.35)!important}
+.chat-btn i{position:absolute;top:4px;right:4px;width:13px;height:13px;border-radius:50%;background:#EF4444;border:2px solid #fff}
+.chat-btn.visto i{display:none}
+@media(max-width:699px){.chat-btn{bottom:calc(100px + env(safe-area-inset-bottom))!important;right:14px!important}}
 </style>
 </head>
 <body>
@@ -339,7 +345,7 @@ async function telaContratos(){
   S.aps={}; aps.forEach(a=>S.aps[a.id]=a);
   if(!aps.length){ sessionStorage.removeItem('nxc_cli'); return telaLogin('Contrato não encontrado.'); }
   aps.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
-  if(!$('#chatBtn')) document.body.insertAdjacentHTML('beforeend','<button id="chatBtn" class="chat-btn" aria-label="Tirar dúvidas">💬 Dúvidas</button>');
+  if(!$('#chatBtn')) document.body.insertAdjacentHTML('beforeend','<button id="chatBtn" class="chat-btn'+(sessionStorage.getItem('nxc_chatv')?' visto':'')+'" aria-label="Tirar dúvidas" title="Dúvidas e atendimento"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M17 9h3a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-1v3l-4-3h-4a2 2 0 0 1-2-2v-1"/></svg><i></i></button>');
   S._aps=aps;
   renderBanco();
 }
@@ -1202,7 +1208,7 @@ document.addEventListener('click',e=>{
   const np=e.target.closest('[data-nps]'); if(np){ formNps(np.dataset.nps,+np.dataset.n); return; }
   const tm=e.target.closest('[data-termo]'); if(tm){ termo(tm.dataset.termo); return; }
   const q=e.target.closest('[data-q]'); if(q){ perguntar(q.dataset.q); return; }
-  if(e.target.closest('#chatBtn')) abrirChat();
+  if(e.target.closest('#chatBtn')){ $('#chatBtn').classList.add('visto'); try{ sessionStorage.setItem('nxc_chatv','1'); }catch(er){} abrirChat(); }
 });
 $('#sair').onclick=()=>{ $('#chatBtn')?.remove(); sessionStorage.removeItem('nxc_cli'); S.tokens=[]; telaLogin(); };
 if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
