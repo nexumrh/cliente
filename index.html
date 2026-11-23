@@ -93,6 +93,40 @@ a{color:var(--pri)}
 .bk-nav button.on{color:#0B1E3F}.bk-nav button.on .ic{color:#A97B23}
 .bk-voltar{background:none;border:0;color:#0B1E3F;font:inherit;font-weight:600;font-size:14px;cursor:pointer;padding:8px 0;display:flex;align-items:center;gap:6px}
 
+
+/* ===== camada banco v2 (nov/2026): azul institucional, sem dourado ===== */
+:root{--pri:#1450D2;--pri-d:#0D3A9E;--pri-s:#EAF0FD;--bg:#F3F5F9;--line:#E3E7EF;--txt:#0F1A33;--mut:#5F6B84;--navy:#0B1E3F}
+body{font-feature-settings:"tnum" 1,"lnum" 1}
+.top{background:var(--navy);box-shadow:0 1px 0 rgba(255,255,255,.06)}
+.top button{border-color:rgba(255,255,255,.22);border-radius:10px;font-weight:600}
+.card{border-radius:16px;border-color:var(--line);box-shadow:0 1px 3px rgba(15,26,51,.05)}
+.btn{border-radius:12px;font-weight:600;letter-spacing:.1px;transition:background .15s,border-color .15s,box-shadow .15s}
+.btn.gold,.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff;box-shadow:0 1px 2px rgba(20,80,210,.25)}
+.btn.gold:hover,.btn.pri:hover{background:var(--pri-d);border-color:var(--pri-d)}
+.btn:not(.gold):not(.pri):not(.red):not(.green){background:#fff;border-color:#D5DBE7;color:var(--navy)}
+.btn:not(.gold):not(.pri):not(.red):not(.green):hover{background:#F5F7FB}
+.btn.sm.gold{box-shadow:none}
+.bk-top{background:var(--navy);box-shadow:0 0 0 100vmax var(--navy);clip-path:inset(0 -100vmax 0 -100vmax);border-radius:0;padding:22px 16px 30px}
+.bk-saldo small{color:#9FB0D0;letter-spacing:.8px}
+.bk-saldo .v{font-size:34px;font-weight:700;letter-spacing:-.8px}
+.bk-prog{height:6px;background:rgba(255,255,255,.14)}
+.bk-prog i{background:#4C8DFF}
+.bk-av{background:#1C3566;border:1px solid rgba(255,255,255,.12)}
+.bk-sect{color:#55617A;font-size:11.5px;letter-spacing:.9px;margin:22px 2px 10px}
+.bk-atalho{border-radius:16px;padding:14px 4px 12px;transition:border-color .15s,box-shadow .15s}
+.bk-atalho:hover{border-color:#C9D5F0;box-shadow:0 4px 14px rgba(15,26,51,.06)}
+.bk-atalho .ic{background:var(--pri-s);color:var(--pri);border-radius:12px}
+.bk-atalho span{color:#24304A;font-size:11px}
+.bk-mini .m,.bk-ap{border-radius:16px}
+.bk-ap .ap-ic{background:var(--pri-s);color:var(--pri)}
+.bk-nav{box-shadow:0 -4px 18px rgba(15,26,51,.06);border-top-color:var(--line);padding-bottom:calc(9px + env(safe-area-inset-bottom))}
+.bk-nav button.on{color:var(--pri)}.bk-nav button.on .ic{color:var(--pri)}
+.bk-nav button.on::before{content:"";display:block;width:22px;height:3px;border-radius:3px;background:var(--pri);margin:-7px auto 4px}
+.bk-voltar{color:var(--pri)}
+.chat-btn{background:var(--pri);box-shadow:0 8px 24px rgba(20,80,210,.35)}
+.bolha.eu{background:var(--pri)}
+a{color:var(--pri)}
+@media(min-width:700px){main{max-width:680px}.bk-nav{max-width:680px;border-radius:16px 16px 0 0}}
 </style>
 </head>
 <body>
@@ -355,7 +389,7 @@ function tabInicioBk(aps,R){
     ${hp&&hp.tipo==='atraso'?`<div class="bk-atalho" data-acordo="${pri.id}"><div class="ic">${sv(IB.acordo)}</div><span>Fazer<br>acordo</span></div>`:`<div class="bk-atalho" data-tabbk="faturas"><div class="ic">${sv(IB.fatura)}</div><span>Ver<br>faturas</span></div>`}</div>`;
   let mini=''; const sc=pri.score, pt=(typeof pontos==='function')?pontos(pri):null;
   if(sc||((pt&&pt.pp))){ mini=`<div class="bk-sect">Seu relacionamento</div><div class="bk-mini">
-    ${sc?`<div class="m"><small>Score NexumCell</small><b style="color:#A97B23">${sc.valor} · ${esc(sc.faixa)}</b><small class="muted">${sc.proxima?`faltam ${sc.proxima.falta} p/ ${esc(sc.proxima.faixa)}`:'faixa máxima'}</small></div>`:''}
+    ${sc?`<div class="m"><small>Score NexumCell</small><b style="color:var(--pri)">${sc.valor} · ${esc(sc.faixa)}</b><small class="muted">${sc.proxima?`faltam ${sc.proxima.falta} p/ ${esc(sc.proxima.faixa)}`:'faixa máxima'}</small></div>`:''}
     ${pt&&pt.pp?`<div class="m"><small>Pontos</small><b style="color:var(--ok)">${pt.saldo}</b><small class="muted">= ${brl(pt.reais)} em desconto</small></div>`:''}</div>`; }
   const lista=`<div class="bk-sect">Seus aparelhos</div>`+aps.map(ap=>{ const [st,cor]=situacao(ap);
     return `<div class="bk-ap" data-abrir="${ap.id}"><div class="ap-ic">${sv(IB.cel)}</div><div style="flex:1"><b>${esc((ap.marca||'')+' '+(ap.modelo||''))}</b><div style="color:var(--mut);font-size:12px">Contrato ${esc(ap.vendaNumero)} · ${esc(ap.lojaNome||'')}</div></div><span class="badge b-${cor}">${esc(st)}</span></div>`; }).join('');
