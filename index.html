@@ -813,6 +813,21 @@ async function telaContrato(tk){
     document.open(); document.write(html+'<script>setTimeout(function(){try{print()}catch(e){}},700)<\/script>'); document.close(); return; }
   $('#ctPdf').onclick=()=>{ const w=window.open('','_blank'); if(!w){ const f=$('#ctFrame'); try{ f.contentWindow.print(); }catch(e){} return; } w.document.write(c.html); w.document.close(); };
 }
+
+/* ---------- Pagamento por link (?pagar=TOKEN): o vendedor ou o suporte manda pelo chat; o cliente paga sem senha ---------- */
+async function telaPagar(tk){
+  document.body.classList.add('nx3'); $('#sair').hidden=true;
+  const ap=await DB.get('aparelhos',tk).catch(()=>null);
+  if(!ap||!ap.parcelas){ $('#app').innerHTML=`<div class="pg3"><h1>Link inválido</h1><p>Este link de pagamento não existe ou expirou. Entre no app com o seu CPF.</p></div><div class="wrap3"><a class="b3 pri full" href="./">Entrar no app</a></div>`; return; }
+  S.aps={[tk]:ap}; S._aps=[ap]; S.tokens=[]; S._carregado=Date.now(); F3.seg='aberto';
+  const h=hoje(), atr=(ap.parcelas||[]).filter(p=>!p.pago&&p.venc<h), tAtr=atr.reduce((t,p)=>t+valorHoje(p,ap).valor,0), enc=encAp(ap);
+  $('#app').innerHTML=`<header class="hero3" style="padding-bottom:22px"><div class="h3-top"><div class="h3-me"><span class="av3">${esc(iniNome(ap.clienteNome))}</span><span><small>Pagamento seguro NexumCell</small><b>${esc(pNome(ap.clienteNome))}</b></span></div></div>
+    <p style="margin:14px 0 0;color:#C7D4F0;font-size:13px">Contrato nº ${esc(String(ap.vendaNumero||''))} · ${esc(((ap.marca||'')+' '+(ap.modelo||'')).trim())}</p></header>
+    ${atr.length&&!enc?`<div class="wrap3"><div class="al3 r" style="margin-top:14px">${i3('alerta')}<div><b>${atr.length} parcela(s) em atraso: ${brl(tAtr)} hoje</b>Pague pelo PIX: o celular libera sozinho em até 1 minuto. Se não conseguir pagar tudo, peça um acordo.</div></div>
+      <button class="b3 sec full" style="margin-top:10px" data-acordo="${esc(tk)}">${i3('acordo')}Pedir acordo do atraso</button></div>`:''}
+    <div id="bkBody"></div><p class="rodape3">Para ver contrato, recibos e mais, <a href="./">entre no app com o seu CPF</a>.</p>`;
+  renderTabBanco('faturas');
+}
 /* ---------- Instalação da trava por link (aparelho em que o QR não funciona) ---------- */
 async function telaInstalar(tk){
   $('#sair').hidden=true;
@@ -1676,6 +1691,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   if(qs.get('vid')) return telaVideo(qs.get('vid'));
   if(qs.get('remoto')) return telaRemota(qs.get('remoto'));
   if(qs.get('instalar')) return telaInstalar(qs.get('instalar'));
+  if(qs.get('pagar')) return telaPagar(qs.get('pagar'));
   if(qs.get('contrato')) return telaContrato(qs.get('contrato'));
   try{ S.tokens=JSON.parse(sessionStorage.getItem('nxc_cli'))||[]; }catch(e){ S.tokens=[]; }
   if(S.tokens.length) await telaContratos(); else telaLogin();
