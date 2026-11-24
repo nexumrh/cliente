@@ -798,6 +798,29 @@ async function telaPre(id){
 
 
 /* ---------- contrato assinado (aberto pelo app da trava ou pelo portal) ---------- */
+/* ---------- declaração de quitação (link do WhatsApp e do app) ---------- */
+async function telaQuitacao(tk){
+  $('#sair').hidden=true;
+  const ap=await DB.get('aparelhos',tk).catch(()=>null), ps=ap?.parcelas||[];
+  const quitado=ap&&ap.status!=='CANCELADO'&&(ap.quitado||ap.status==='QUITADO'||(ps.length&&ps.every(p=>p.pago)));
+  if(!quitado){ $('#app').innerHTML='<div class="card center"><h2>Declaração ainda não disponível</h2><p class="muted">A declaração de quitação fica disponível quando todas as parcelas do contrato estiverem pagas. Fale com o Suporte NexumCell pelo WhatsApp se tiver dúvida.</p></div>'; return; }
+  const ult=ps.map(p=>String(p.pagoEm||'').slice(0,10)).filter(Boolean).sort().pop()||hoje(), total=ps.reduce((s,p)=>s+(+(p.valorPago??p.valor)||0),0);
+  const dBR=d=>String(d).slice(0,10).split('-').reverse().join('/'), mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const hj=hoje(), porExtenso=`${+hj.slice(8,10)} de ${mes[+hj.slice(5,7)-1]} de ${hj.slice(0,4)}`;
+  const doc=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Declaração de quitação · contrato nº ${esc(String(ap.vendaNumero||''))}</title>
+<style>body{font:15px/1.65 Georgia,'Times New Roman',serif;color:#111;max-width:720px;margin:0 auto;padding:40px 28px}h1{font:700 20px system-ui,sans-serif;text-align:center;letter-spacing:.06em;margin:0 0 6px}.sub{text-align:center;font:13px system-ui,sans-serif;color:#555;margin:0 0 30px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font:14px system-ui,sans-serif}td{border:1px solid #CBD5E1;padding:8px 10px}td:first-child{background:#F1F5F9;width:38%;font-weight:600}.ass{margin-top:60px;text-align:center;font:14px system-ui,sans-serif}.ass div{border-top:1px solid #111;width:300px;margin:0 auto 4px;padding-top:6px}
+.bar{position:sticky;top:0;background:#0A1733;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font:600 14px system-ui,sans-serif;margin:-40px -28px 30px}.bar button{background:#2563EB;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:700}@media print{.bar{display:none}body{padding:0}}</style></head><body>
+<div class="bar"><span>Declaração de quitação · NexumCell</span><button onclick="print()">Salvar como PDF</button></div>
+<h1>DECLARAÇÃO DE QUITAÇÃO</h1><p class="sub">Contrato de compra parcelada nº ${esc(String(ap.vendaNumero||''))}</p>
+<p>A <b>NexumCell</b> declara, para os devidos fins, que o contrato abaixo foi <b>integralmente quitado</b>, não havendo débito pendente referente a ele. A trava de pagamento do aparelho está encerrada e não será mais acionada por este contrato.</p>
+<table><tr><td>Cliente</td><td>${esc(ap.clienteNome||'')}</td></tr><tr><td>Contrato</td><td>nº ${esc(String(ap.vendaNumero||''))}</td></tr><tr><td>Aparelho</td><td>${esc([ap.marca,ap.modelo].filter(Boolean).join(' '))}${ap.imei?' · IMEI '+esc(ap.imei):''}</td></tr>
+<tr><td>Loja</td><td>${esc(ap.lojaNome||'NexumCell')}</td></tr><tr><td>Parcelas</td><td>${ps.length} parcela(s), todas pagas</td></tr><tr><td>Total pago nas parcelas</td><td>${brl(total)}</td></tr><tr><td>Data da quitação</td><td>${dBR(ult)}</td></tr></table>
+<p>Esta declaração foi emitida eletronicamente pelo sistema NexumCell e pode ser conferida pelo link de origem.</p>
+<p style="margin-top:30px">Foz do Iguaçu, ${porExtenso}.</p><div class="ass"><div>NexumCell</div>Departamento Financeiro</div>
+<script>if(/[?&]pdf=1/.test(location.search))setTimeout(function(){try{print()}catch(e){}},700)<\/script></body></html>`;
+  document.open(); document.write(doc); document.close();
+}
 async function telaContrato(tk){
   $('#sair').hidden=true;
   const c=await DB.get('contratos',tk).catch(()=>null);
@@ -1693,6 +1716,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
   if(qs.get('instalar')) return telaInstalar(qs.get('instalar'));
   if(qs.get('pagar')) return telaPagar(qs.get('pagar'));
   if(qs.get('contrato')) return telaContrato(qs.get('contrato'));
+  if(qs.get('quitacao')) return telaQuitacao(qs.get('quitacao'));
   try{ S.tokens=JSON.parse(sessionStorage.getItem('nxc_cli'))||[]; }catch(e){ S.tokens=[]; }
   if(S.tokens.length) await telaContratos(); else telaLogin();
   traduzirNo(document.body);
