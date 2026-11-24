@@ -804,9 +804,13 @@ async function telaContrato(tk){
   if(!c?.html){ $('#app').innerHTML='<div class="card center"><h2>Contrato ainda não disponível</h2><p class="muted">A cópia do seu contrato ainda não foi publicada. Fale com o Suporte NexumCell pelo WhatsApp ou tente mais tarde.</p></div>'; return; }
   const semScript=c.html.replace(/<script[\s\S]*?<\/script>/gi,'');
   $('#app').innerHTML=`<div class="hero"><small>Contrato nº ${esc(String(c.numero||''))}</small><b style="font-size:22px">Seu contrato assinado</b><span style="color:#C9D4EE">${esc(c.clienteNome||'')} · assinado em ${c.assinadoEm?fmtDT(c.assinadoEm):'—'}</span></div>
-    <div class="card"><button class="btn gold full" id="ctPdf">⬇ Baixar / salvar em PDF</button><p class="small muted" style="margin:8px 0 0">Na tela de impressão, escolha <b>Salvar como PDF</b>.</p></div>
+    <div class="card"><button class="btn gold full" id="ctPdf">Baixar / salvar em PDF</button><p class="small muted" style="margin:8px 0 0">Na tela de impressão, escolha <b>Salvar como PDF</b>.</p></div>
     <div class="card" style="padding:0;overflow:hidden"><iframe id="ctFrame" sandbox="allow-same-origin" style="width:100%;height:70vh;border:0;background:#fff"></iframe></div>`;
   $('#ctFrame').srcdoc=semScript;
+  if(new URLSearchParams(location.search).get('pdf')){ // link do chat: abre o contrato inteiro e a tela de salvar em PDF
+    const barra='<div class="nx-pdf" style="position:sticky;top:0;z-index:9;background:#0A1733;color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font:600 14px system-ui,sans-serif"><span>Contrato nº '+esc(String(c.numero||''))+' · NexumCell</span><button onclick="print()" style="background:#2563EB;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer">Salvar como PDF</button></div><style>@media print{.nx-pdf{display:none!important}}</style>';
+    const html=/<body[^>]*>/i.test(semScript)?semScript.replace(/<body([^>]*)>/i,'<body$1>'+barra):barra+semScript;
+    document.open(); document.write(html+'<script>setTimeout(function(){try{print()}catch(e){}},700)<\/script>'); document.close(); return; }
   $('#ctPdf').onclick=()=>{ const w=window.open('','_blank'); if(!w){ const f=$('#ctFrame'); try{ f.contentWindow.print(); }catch(e){} return; } w.document.write(c.html); w.document.close(); };
 }
 /* ---------- Instalação da trava por link (aparelho em que o QR não funciona) ---------- */
